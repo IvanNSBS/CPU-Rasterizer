@@ -1,0 +1,22 @@
+﻿  main0.cpp
+e:\visual studio projects\rasterizer\rasterizer\vec2f.h(107): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\vec3.h(50): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\vec3.h(129): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\graphics.h(95): warning C4244: '-=': conversão de 'float' para 'sf::Uint8', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\graphics.h(96): warning C4244: '-=': conversão de 'float' para 'sf::Uint8', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\graphics.h(104): warning C4244: '-=': conversão de 'float' para 'sf::Uint8', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\graphics.h(105): warning C4244: '-=': conversão de 'float' para 'sf::Uint8', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\camera.h(27): warning C4244: 'inicializando': conversão de 'int' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\camera.h(28): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(41): warning C4018: '<': incompatibilidade de signed/unsigned
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(63): warning C4018: '<': incompatibilidade de signed/unsigned
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(75): warning C4018: '<': incompatibilidade de signed/unsigned
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(87): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(88): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(95): warning C4018: '<': incompatibilidade de signed/unsigned
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(107): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(108): warning C4244: 'inicializando': conversão de 'double' para 'float', possível perda de dados
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(115): warning C4018: '<': incompatibilidade de signed/unsigned
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(202): warning C4018: '<': incompatibilidade de signed/unsigned
+e:\visual studio projects\rasterizer\rasterizer\main0.cpp(212): warning C4018: '<': incompatibilidade de signed/unsigned
+  Rasterizer.vcxproj -> E:\Visual Studio Projects\Rasterizer\Debug\Rasterizer.exe
