@@ -16,13 +16,16 @@ public:
     matrix44 camToWorld;
     matrix44 worldToCamera;
 
+	vec3 _from, _at, _up;
+
     vec3 axisX, axisY, axisZ;
 public:
     camera();
     camera(const vec3 &from, const vec3 &at, const vec3 &up,
            const float &f, const float &n,
            const int &iwidth, const int &iheight): 
-           fov(f), near(n), imgWidth(iwidth), imgHeight(iheight)
+           fov(f), near(n), imgWidth(iwidth), imgHeight(iheight),
+		   _from(from), _at(at), _up(up)
            {
                 float aspectratio = iwidth/iheight;
                 float angle = std::tan((f*0.5)*M_PI/180) * near;
@@ -35,7 +38,7 @@ public:
 
     void set_axis_and_matrix(const vec3& from, const vec3& at, const vec3& up)
     {
-        axisZ = unit_vector( from-at );
+        axisZ = unit_vector( at - from );
         axisY = unit_vector( up - ( axisZ * ( dot(up,axisZ)/dot(axisZ, axisZ) ) ) );
         axisX = unit_vector( cross(axisY, axisZ) );
 
@@ -57,6 +60,12 @@ public:
 
         worldToCamera = camToWorld.inverse();
     }
+
+	void move(vec3 dir) {
+		_from += dir;
+		_at += dir;
+		set_axis_and_matrix( _from, _at, _up);
+	}
 
     bool compute_pixel_coordinates(const vec3 &pWorld, vec2f &pRaster) 
     { 

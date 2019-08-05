@@ -5,8 +5,9 @@
 #include <vector>
 #include <math.h>
 #include "camera.h"
-#include "mesh.h"
 #include <chrono>
+#include <algorithm>
+#include "object.h"
 
 #define MIN 0
 #define MAX 1
@@ -34,50 +35,105 @@ static vector<vec3> cubepts = {
 };
 
 
-void render_scene( std::vector<vec2f> &raster_pts, std::vector<vec3> &world_pts, camera &cam ) {
+void render_scene( Mesh mesh, camera &cam, sf::RenderWindow &wind ) {
 
-	raster_pts.clear();
-
-	for (int i = 0; i < world_pts.size(); i += 3)
+	std::vector<Triangle> tris;
+	for (int i = 0, j = 0; i < mesh.vertices.size(); i += 3, j++)
 	{
-		vec2f praster1;
-		vec2f praster2;
-		vec2f praster3;
+		Triangle t;
+		t.p[0] = mesh.vertices[i + 0];
+		t.p[1] = mesh.vertices[i + 1];
+		t.p[2] = mesh.vertices[i + 2];
+		t.n = mesh.normals[j];
+		tris.push_back(t);
+	}
 
-		cam.compute_pixel_coordinates(world_pts[i + 0], praster1);
-		cam.compute_pixel_coordinates(world_pts[i + 1], praster2);
-		cam.compute_pixel_coordinates(world_pts[i + 2], praster3);
+	//std::sort(tris.begin(), tris.end(), [](Triangle& t1, Triangle &t2)
+	//	{
+	//		float z1 = (t1.p[0].z() + t1.p[1].z(), t1.p[2].z()) / 3.0f;
+	//		float z2 = (t2.p[0].z() + t2.p[1].z(), t2.p[2].z()) / 3.0f;
+	//		return z1 > z2;
+	//	});
 
-		raster_pts.push_back(praster1);
-		raster_pts.push_back(praster2);
-		raster_pts.push_back(praster3);
+
+	vec3 light(0.0f, 0.0f, -1.0f);
+	light.make_unit_vector();
+	float l = light.length();
+	light /= l;
+
+	for (int i = 0; i < tris.size(); i++)
+	{
+		tris[i].n.make_unit_vector();
+		vec3 normal = tris[i].n;
+		vec3 ray = tris[i].p[0] -cam._from;
+		ray.make_unit_vector();
+		if ( dot(normal, ray ) > 0.4f) {
+
+			float dp = dot(normal, light);
+			vec2f praster1;
+			vec2f praster2;
+			vec2f praster3;
+
+			cam.compute_pixel_coordinates(tris[i].p[0], praster1);
+			cam.compute_pixel_coordinates(tris[i].p[1], praster2);
+			cam.compute_pixel_coordinates(tris[i].p[2], praster3);
+
+			sf::Vector2f p1(praster1.x(), praster1.y());
+			sf::Vector2f p2(praster2.x(), praster2.y());
+			sf::Vector2f p3(praster3.x(), praster3.y());
+
+			vec3 col( 255, 255, 255 );
+			// col *= dp;
+
+			sf::ConvexShape convex;
+			convex.setFillColor( sf::Color(col.x(), col.y(), col.z(), 255) );
+			// resize it to 5 points
+			convex.setPointCount(3);
+
+			// define the points
+			convex.setPoint(0, p1);
+			convex.setPoint(1, p2);
+			convex.setPoint(2, p3);
+
+			// wind.draw( convex );
+
+			//wind.draw(LineShape(p1, p2, sf::Color(255, 255, 255, 255)));
+			//wind.draw(LineShape(p1, p3, sf::Color(255, 255, 255, 255)));
+			//wind.draw(LineShape(p2, p3, sf::Color(255, 255, 255, 255)));
+		}
 	}
 }
 
-void scale(float s_x, float s_y, float s_z, std::vector<vec3> &points) {
+void scale(float s_x, float s_y, float s_z, Mesh &mesh) {
 
 	matrix44 tr(s_x, 0, 0, 0,
 				0, s_y, 0, 0,
 				0, 0, s_z, 0,
 				0, 0 , 0, 1);
-	for (int i = 0; i < points.size(); ++i) {
-		tr.multVecMatrix(points[i], points[i]);
+	for (int i = 0; i < mesh.vertices.size(); ++i) {
+		tr.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
+	}
+	for (int i = 0; i < mesh.normals.size(); ++i) {
+		tr.multVecMatrix(mesh.normals[i], mesh.normals[i]);
 	}
 }
 
-void translate(vec3 tl, std::vector<vec3> &points) {
+void translate(vec3 tl, Mesh &mesh) {
 
 	matrix44 tr(1, 0, 0, 0,
 				0, 1, 0, 0,
 				0, 0, 1, 0,
 				tl.x(), tl.y(), tl.z(), 1);
 
-	for (int i = 0; i < points.size(); ++i) {
-		tr.multVecMatrix(points[i], points[i]);
+	for (int i = 0; i < mesh.vertices.size(); ++i) {
+		tr.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
+	}
+	for (int i = 0; i < mesh.normals.size(); ++i) {
+		tr.multVecMatrix(mesh.normals[i], mesh.normals[i]);
 	}
 }
 
-void rot_y(float deg, std::vector<vec3> &points, vec3 rot_point) {
+void rot_y(float deg, Mesh &mesh, vec3 rot_point) {
 
 	matrix44 tr(		1,			  0,			0,			0,
 						0,			  1,			0,			0,
@@ -92,12 +148,15 @@ void rot_y(float deg, std::vector<vec3> &points, vec3 rot_point) {
 		0, 0, 0, 1);
 	matrix44 result = (tr*rot)*itr;
 
-	for (int i = 0; i < points.size(); ++i) {
-		result.multVecMatrix(points[i], points[i]);
+	for (int i = 0; i < mesh.vertices.size(); ++i) {
+		rot.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
+	}
+	for (int i = 0; i < mesh.normals.size(); ++i) {
+		rot.multVecMatrix(mesh.normals[i], mesh.normals[i]);
 	}
 }
 
-void rot_x(float deg, std::vector<vec3> &points, vec3 rot_point) {
+void rot_x(float deg, Mesh &mesh, vec3 rot_point) {
 
 	matrix44 tr(1, 0, 0, 0,
 				0, 1, 0, 0,
@@ -111,28 +170,29 @@ void rot_x(float deg, std::vector<vec3> &points, vec3 rot_point) {
 				0, sen, co, 0,
 				0, 0, 0, 1);
 	matrix44 result = (tr*rot)*itr;
-
-	for (int i = 0; i < points.size(); ++i) {
-		result.multVecMatrix(points[i], points[i]);
+	for (int i = 0; i < mesh.vertices.size(); ++i) {
+		rot.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
+	}
+	for (int i = 0; i < mesh.normals.size(); ++i) {
+		rot.multVecMatrix(mesh.normals[i], mesh.normals[i]);
 	}
 }
 
 int main()
 {
 	
-	mesh monkey_mesh;
+	Mesh monkey_mesh;
 	if (!monkey_mesh.load_mesh_from_file("./monkey.obj"))
 		std::cout << "monkey wasnt loaded\n";
 
 	sf::ContextSettings settings;
-	settings.antialiasingLevel = 8;
+	settings.antialiasingLevel = 0;
 	sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), 
 							"Rasterizer", 
 							sf::Style::Titlebar | sf::Style::Close, settings);
 
-	std::vector<vec2f> poly_pts;
 	std::vector<LineShape> poly_lines;	// linhas da malha poligonal
-	camera cam(vec3(20, 0, 300), vec3(0, 0, -1), vec3(0, 1, 0), 60.0f, 0.1f, WIDTH, HEIGHT);
+	camera cam(vec3(0, 0, 300), vec3(0, 0, -1), vec3(0, 1, 0), 60.0f, 0.1f, WIDTH, HEIGHT);
 
 	sf::Font font;
 	if (font.loadFromFile("../arial_narrow_7.ttf"))
@@ -157,6 +217,7 @@ int main()
 
 	while (window.isOpen())
 	{
+		clock.restart().asSeconds();
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -173,6 +234,23 @@ int main()
 
 			}
 
+			else if (sf::Keyboard::isKeyPressed){
+
+				vec3 dir (0.0f, 0.0f, 0.0f);
+
+				if (event.key.code == sf::Keyboard::W)
+					dir +=(vec3(0.f, 0.f, -0.8f));
+				if (event.key.code == sf::Keyboard::S)
+					dir += (vec3(0.0f, 0.0f, 0.8f));
+				if (event.key.code == sf::Keyboard::A)
+					dir += ( vec3(-0.1f, 0.0f, 0.0f));
+				if (event.key.code == sf::Keyboard::D)
+					dir += (vec3(0.1f, 0.0f, 0.0f));
+				
+				cam.move(dir);
+
+			}
+
 			//remove control point
 			else if (event.type == event.MouseButtonPressed && event.mouseButton.button == sf::Mouse::Right)
 			{
@@ -186,36 +264,17 @@ int main()
 		}
 
 
-		//move control point
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-		{
-			
-		}
-		
-		rot_x(1.5f, monkey_mesh.vertices, monkey_mesh.vertices[0]);
-		rot_y(-0.9f, monkey_mesh.vertices, monkey_mesh.vertices[0]);
+		//rot_x(1.9f, monkey_mesh, monkey_mesh.bbox_center);
+		rot_y(-1.47f, monkey_mesh, vec3(0,0,0));
 		//scale(1.0001f, 1.0001f, 1.0001f, cubepts);
-		//translate( vec3(0.0f, 0.000f, 0.01f), cubepts);
-		render_scene(poly_pts, monkey_mesh.vertices, cam);
-
-		//control polygon
-		for (int i = 0; i < monkey_mesh.vertices.size(); i += 3)
-		{
-			sf::Vector2f p1(poly_pts[i].x(), poly_pts[i].y());
-			sf::Vector2f p2(poly_pts[i + 1].x(), poly_pts[i + 1].y());
-			sf::Vector2f p3(poly_pts[i + 2].x(), poly_pts[i + 2].y());
-			poly_lines.push_back(LineShape(p1, p2, sf::Color(255, 255, 255, 255)));
-			poly_lines.push_back(LineShape(p1, p3, sf::Color(255, 255, 255, 255)));
-			poly_lines.push_back(LineShape(p2, p3, sf::Color(255, 255, 255, 255)));
-		}
-	
-		for (int i = 0; i < poly_lines.size(); ++i)
-			window.draw(poly_lines[i]);
+		//translate( vec3(0.0f, 0.0001f, 0.1f), monkey_mesh.vertices);
+		render_scene(monkey_mesh, cam, window);
 
 		time = clock.getElapsedTime();
 		float fps = 1.0f / time.asSeconds();
 		clock.restart().asSeconds();
-		std::cout << fps << "\n";
+
+		//std::cout << fps << "\n";
 		base_text.setString("FPS: " + std::to_string(fps) );
 
 
