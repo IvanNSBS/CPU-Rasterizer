@@ -186,6 +186,9 @@ public:
 			this->normals.push_back(nrml);
 		}
 
+		std::cout << "vertSize = " << vertexIndices.size();
+		std::cout << "normalSize = " << normalIndices.size();
+
 		return true;
 	}
 };

@@ -29,7 +29,13 @@ public:
 
     inline float length() const{ return sqrt(e[0]*e[0] + e[1]*e[1]); }
     inline float squared_length() const{ return e[0]*e[0] + e[1]*e[1]; }
+	inline void make_unit_vector();
 };
+
+inline void vec2f::make_unit_vector() {
+	float k = 1.0 / sqrt(e[0] * e[0] + e[1] * e[1]);
+	e[0] *= k; e[1] *= k;
+}
 
 inline std::istream& operator>>(std::istream &is, vec2f &t) {
     is >> t.e[0] >> t.e[1];

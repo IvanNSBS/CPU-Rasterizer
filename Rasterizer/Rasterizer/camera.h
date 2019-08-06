@@ -38,7 +38,7 @@ public:
 
     void set_axis_and_matrix(const vec3& from, const vec3& at, const vec3& up)
     {
-        axisZ = unit_vector( at - from );
+        axisZ = unit_vector( from-at );
         axisY = unit_vector( up - ( axisZ * ( dot(up,axisZ)/dot(axisZ, axisZ) ) ) );
         axisX = unit_vector( cross(axisY, axisZ) );
 
@@ -69,6 +69,13 @@ public:
 
     bool compute_pixel_coordinates(const vec3 &pWorld, vec2f &pRaster) 
     { 
+		vec3 ray = pWorld - _from;
+		ray.make_unit_vector();
+		vec3 lookdir = _from - _at;
+		lookdir.make_unit_vector();
+		if ( dot(ray, lookdir) > 0.0f )
+			return false;
+
         vec3 pCamera; 
         worldToCamera.multVecMatrix(pWorld, pCamera); 
         vec2f pScreen; 

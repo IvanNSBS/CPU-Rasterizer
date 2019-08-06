@@ -38,68 +38,67 @@ static vector<vec3> cubepts = {
 void render_scene( Mesh mesh, camera &cam, sf::RenderWindow &wind ) {
 
 	std::vector<Triangle> tris;
-	for (int i = 0, j = 0; i < mesh.vertices.size(); i += 3, j++)
+	for (int i = 0; i < mesh.vertices.size(); i += 3)
 	{
 		Triangle t;
 		t.p[0] = mesh.vertices[i + 0];
 		t.p[1] = mesh.vertices[i + 1];
 		t.p[2] = mesh.vertices[i + 2];
-		t.n = mesh.normals[j];
+		t.n = mesh.normals[i];
 		tris.push_back(t);
 	}
 
-	//std::sort(tris.begin(), tris.end(), [](Triangle& t1, Triangle &t2)
-	//	{
-	//		float z1 = (t1.p[0].z() + t1.p[1].z(), t1.p[2].z()) / 3.0f;
-	//		float z2 = (t2.p[0].z() + t2.p[1].z(), t2.p[2].z()) / 3.0f;
-	//		return z1 > z2;
-	//	});
+	std::sort(tris.begin(), tris.end(), [](Triangle& t1, Triangle &t2)
+		{
+			float z1 = (t1.p[0].z() + t1.p[1].z(), t1.p[2].z()) / 3.0f;
+			float z2 = (t2.p[0].z() + t2.p[1].z(), t2.p[2].z()) / 3.0f;
+			return z1 < z2;
+		});
 
 
-	vec3 light(0.0f, 0.0f, -1.0f);
+	vec3 light(-40.0f, 0.0f, -1.0f);
 	light.make_unit_vector();
-	float l = light.length();
-	light /= l;
 
 	for (int i = 0; i < tris.size(); i++)
 	{
 		tris[i].n.make_unit_vector();
 		vec3 normal = tris[i].n;
+
 		vec3 ray = tris[i].p[0] -cam._from;
-		ray.make_unit_vector();
-		if ( dot(normal, ray ) > 0.4f) {
+		if ( dot(normal, ray ) < 0.0f || true) {
 
 			float dp = dot(normal, light);
 			vec2f praster1;
 			vec2f praster2;
 			vec2f praster3;
 
-			cam.compute_pixel_coordinates(tris[i].p[0], praster1);
-			cam.compute_pixel_coordinates(tris[i].p[1], praster2);
-			cam.compute_pixel_coordinates(tris[i].p[2], praster3);
+			if (cam.compute_pixel_coordinates(tris[i].p[0], praster1) &&
+				cam.compute_pixel_coordinates(tris[i].p[1], praster2) &&
+				cam.compute_pixel_coordinates(tris[i].p[2], praster3)
+			){
+				sf::Vector2f p1(praster1.x(), praster1.y());
+				sf::Vector2f p2(praster2.x(), praster2.y());
+				sf::Vector2f p3(praster3.x(), praster3.y());
 
-			sf::Vector2f p1(praster1.x(), praster1.y());
-			sf::Vector2f p2(praster2.x(), praster2.y());
-			sf::Vector2f p3(praster3.x(), praster3.y());
+				vec3 col(500, 500, 500);
+				col *= dp;
 
-			vec3 col( 255, 255, 255 );
-			// col *= dp;
+				sf::ConvexShape convex;
+				convex.setFillColor(sf::Color(col.x(), col.y(), col.z(), 255));
+				// resize it to 5 points
+				convex.setPointCount(3);
 
-			sf::ConvexShape convex;
-			convex.setFillColor( sf::Color(col.x(), col.y(), col.z(), 255) );
-			// resize it to 5 points
-			convex.setPointCount(3);
+				// define the points
+				convex.setPoint(0, p1);
+				convex.setPoint(1, p2);
+				convex.setPoint(2, p3);
 
-			// define the points
-			convex.setPoint(0, p1);
-			convex.setPoint(1, p2);
-			convex.setPoint(2, p3);
+				wind.draw(convex);
 
-			// wind.draw( convex );
-
-			//wind.draw(LineShape(p1, p2, sf::Color(255, 255, 255, 255)));
-			//wind.draw(LineShape(p1, p3, sf::Color(255, 255, 255, 255)));
-			//wind.draw(LineShape(p2, p3, sf::Color(255, 255, 255, 255)));
+				wind.draw(LineShape(p1, p2, sf::Color(255, 255, 255, 255)));
+				wind.draw(LineShape(p1, p3, sf::Color(255, 255, 255, 255)));
+				wind.draw(LineShape(p2, p3, sf::Color(255, 255, 255, 255)));
+			}
 		}
 	}
 }
@@ -140,19 +139,17 @@ void rot_y(float deg, Mesh &mesh, vec3 rot_point) {
 						0,			  0,			1,			0,
 			    -rot_point.x(), -rot_point.y(), -rot_point.z(), 1);
 	matrix44 itr = tr.inverse();
-	float sen = sin(deg*PI / 180.0);
-	float co = cos(deg*PI / 180);
+	float sen = sin(deg*PI / 180.0f);
+	float co = cos(deg*PI / 180.0f);
 	matrix44 rot(co, 0, sen, 0,
-		0, 1, 0, 0,
-		-sen, 0, co, 0,
-		0, 0, 0, 1);
+				0, 1, 0, 0,
+				-sen, 0, co, 0,
+				0, 0, 0, 1);
 	matrix44 result = (tr*rot)*itr;
 
 	for (int i = 0; i < mesh.vertices.size(); ++i) {
-		rot.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
-	}
-	for (int i = 0; i < mesh.normals.size(); ++i) {
-		rot.multVecMatrix(mesh.normals[i], mesh.normals[i]);
+		result.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
+		result.multVecMatrix(mesh.normals[i], mesh.normals[i]);
 	}
 }
 
@@ -171,18 +168,17 @@ void rot_x(float deg, Mesh &mesh, vec3 rot_point) {
 				0, 0, 0, 1);
 	matrix44 result = (tr*rot)*itr;
 	for (int i = 0; i < mesh.vertices.size(); ++i) {
-		rot.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
-	}
-	for (int i = 0; i < mesh.normals.size(); ++i) {
-		rot.multVecMatrix(mesh.normals[i], mesh.normals[i]);
+		result.multVecMatrix(mesh.vertices[i], mesh.vertices[i]);
+		result.multVecMatrix(mesh.normals[i], mesh.normals[i]);
 	}
 }
+
 
 int main()
 {
 	
 	Mesh monkey_mesh;
-	if (!monkey_mesh.load_mesh_from_file("./monkey.obj"))
+	if (!monkey_mesh.load_mesh_from_file("./cube.obj"))
 		std::cout << "monkey wasnt loaded\n";
 
 	sf::ContextSettings settings;
@@ -210,10 +206,15 @@ int main()
 	base_text.setString("FPS: 20");
 
 	sf::Vector2i mouse_pos;
+	vec2f cur_pos;
+	vec2f old_pos;
+	bool holding_click = false;
 
 	sf::Clock clock;
 	sf::Time time;
 
+	float yaw = 0.0f;
+	float pitch = 0.0f;
 
 	while (window.isOpen())
 	{
@@ -223,15 +224,33 @@ int main()
 		{
 			mouse_pos = sf::Mouse::getPosition(window);
 
+			if (holding_click) {
+				cur_pos = vec2f((float)mouse_pos.x, (float)mouse_pos.y);
+				vec2f sub = cur_pos - old_pos;
+
+				sub[0] /= WIDTH;
+				sub[1] /= HEIGHT;
+
+				yaw = sub.x() * 60.f;
+				pitch = -sub.y() * 60.f ;
+
+				rot_x(pitch, monkey_mesh, monkey_mesh.bbox_center);
+				rot_y(-yaw, monkey_mesh, monkey_mesh.bbox_center);
+				old_pos = cur_pos;
+			}
+
 			if (event.type == sf::Event::Closed)
 				window.close();
 
 			//add control point
 			else if (event.type == event.MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
 			{
-
-				sf::Vector2f localPosition((float)mouse_pos.x, (float)mouse_pos.y);
-
+				old_pos = vec2f((float)mouse_pos.x, (float)mouse_pos.y);
+				holding_click = true;
+			}
+			else if (event.type == event.MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left)
+			{
+				holding_click = false;
 			}
 
 			else if (sf::Keyboard::isKeyPressed){
@@ -239,33 +258,26 @@ int main()
 				vec3 dir (0.0f, 0.0f, 0.0f);
 
 				if (event.key.code == sf::Keyboard::W)
-					dir +=(vec3(0.f, 0.f, -0.8f));
+					dir +=(vec3(0.f, 0.2f, 0.0f));
 				if (event.key.code == sf::Keyboard::S)
-					dir += (vec3(0.0f, 0.0f, 0.8f));
+					dir += (vec3(0.0f, -0.2f, 0.0f));
 				if (event.key.code == sf::Keyboard::A)
-					dir += ( vec3(-0.1f, 0.0f, 0.0f));
+					dir += ( vec3(-0.20f, 0.0f, 0.0f));
 				if (event.key.code == sf::Keyboard::D)
-					dir += (vec3(0.1f, 0.0f, 0.0f));
+					dir += (vec3(0.20f, 0.0f, 0.0f));
+				if (event.key.code == sf::Keyboard::Q)
+					dir += (vec3(0.f, 0.f, -1.8f));
+				if (event.key.code == sf::Keyboard::E)
+					dir += (vec3(0.0f, 0.0f, 1.8f));
 				
 				cam.move(dir);
-
-			}
-
-			//remove control point
-			else if (event.type == event.MouseButtonPressed && event.mouseButton.button == sf::Mouse::Right)
-			{
-
-			}
-
-			else if(event.type == event.MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left) 
-			{
 
 			}
 		}
 
 
-		//rot_x(1.9f, monkey_mesh, monkey_mesh.bbox_center);
-		rot_y(-1.47f, monkey_mesh, vec3(0,0,0));
+		//rot_x(-0.01f, monkey_mesh, monkey_mesh.bbox_center);
+		//rot_y(-0.04f, monkey_mesh, monkey_mesh.bbox_center);
 		//scale(1.0001f, 1.0001f, 1.0001f, cubepts);
 		//translate( vec3(0.0f, 0.0001f, 0.1f), monkey_mesh.vertices);
 		render_scene(monkey_mesh, cam, window);
@@ -282,7 +294,7 @@ int main()
 		window.display();
 
 		poly_lines.clear();
-		window.clear(sf::Color(0,0,0));
+		window.clear(sf::Color(255,0,0));
 	}
 
 	return 0;
