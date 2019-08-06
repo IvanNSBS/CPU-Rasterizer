@@ -36,9 +36,18 @@ void render_scene( Mesh mesh, camera &cam, SDL_Window *wind, SDL_Renderer* rende
 
 	std::sort(tris.begin(), tris.end(), [](Triangle& t1, Triangle &t2)
 		{
-			float z1 = (t1.p[0].z() + t1.p[1].z(), t1.p[2].z()) / 3.0f;
-			float z2 = (t2.p[0].z() + t2.p[1].z(), t2.p[2].z()) / 3.0f;
-			return z1 < z2;
+            std::vector<float> d1 = { t1.p[0].z(), t1.p[1].z(), t1.p[2].z() };
+            std::vector<float> d2 = { t2.p[0].z(), t2.p[1].z(), t2.p[2].z() };
+
+            std::sort( d1.begin(), d1.end(), []( float &f1, float &f2) { return f1 > f2; } );
+            std::sort( d2.begin(), d2.end(), []( float &f1, float &f2) { return f1 > f2; } );
+
+			if( d1[0] != d2[0])
+				return d1[0] < d2[0];
+			else if (d1[1] != d2[1])
+				return d1[1] < d2[2];
+			else
+				return d1[2] < d2[2];
 		});
 
 
@@ -211,7 +220,7 @@ int main(int argc, char* argv[])
                 double ms = (double)(now - then)/CLOCKS_PER_SEC;
                 // ms *= 1000.0;
                 ms = 1.0/ms;
-                std::cout << "frametime: " << (int)ms << "\n";
+                // std::cout << "frametime: " << (int)ms << "\n";
             }
         }
 
