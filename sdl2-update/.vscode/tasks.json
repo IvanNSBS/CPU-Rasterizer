@@ -6,13 +6,12 @@
         {
             "label": "compile",
             "type": "process",
+            "command": "g++",
             "windows": {
-                "command": "g++",
                 "args": ["IC:\\mingw64\\include", "-LC:\\mingw64\\lib", "sdl_test.cpp", "-g", "-O3", "-w", "-lSDL2main", "-lSDL2", "-o", "Renderer.exe"],
             },
             "linux":{
-                "command": "g++",
-                "args": ["sdl_test.cpp", "-g", "-O3", "-w", "-lSDL2main", "-lSDL2", "-o", "Renderer.exe"],
+                "args": ["sdl_test.cpp", "ImGUI/imgui_draw.cpp", "ImGUI/imgui_sdl.cpp", "ImGUI/imgui_widgets.cpp", "ImGUI/imgui.cpp" , "-g", "-O3", "-w", "-lSDL2main", "-lSDL2", "-o", "Renderer.exe"],
             },
         }
     ]

@@ -16,35 +16,45 @@
 #define min_z 4
 #define max_z 5
 
+#define M_PI 3.141592653589793
+
+
 struct Triangle {
-	vec3 p[3];
-	vec3 n;
+	vec3 vert[3];
+	vec2f uv[3];
+	vec3 normal;
+
+	Triangle( const vec3 v[3], const vec2f t[3], const vec3 n): 
+		vert({v[0], v[1], v[2]}), uv({t[0], t[1], t[2]}), normal(n)
+	{}
+
+	Triangle( const std::vector<vec3> v, const std::vector<vec2f> t, const vec3 n): 
+		vert({v[0], v[1], v[2]}), uv({t[0], t[1], t[2]}), normal(n)
+	{}
+
+	~Triangle(){}
 };
 
 class Mesh 
 {
 public:
-	std::vector<vec3> vertices;
-	std::vector<vec2f> uvs;
-	std::vector<vec3> normals;
-	float bounding_box[6];
+	std::vector<Triangle> tris;
 	vec3 bbox_center;
 
-	Mesh() {
+	Mesh() {}
+	~Mesh() {}
+
+	bool load_mesh_from_file(const char* path) 
+	{
+		tris.clear();
+
+		float bounding_box[6];
 		bounding_box[min_x] = 999999.0f;
 		bounding_box[max_x] = -999999.0f;
 		bounding_box[min_y] = 999999.0f;
 		bounding_box[max_y] = -999999.0f;
 		bounding_box[min_z] = 999999.0f;
 		bounding_box[max_z] = -999999.0f;
-	}
-	~Mesh() {}
-
-	bool load_mesh_from_file(const char* path) 
-	{
-		vertices.clear();
-		uvs.clear();
-		normals.clear();
 
 		std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
 		std::vector< vec3 > temp_vertices;
@@ -105,7 +115,7 @@ public:
 				std::string snd = vertex1.substr(fstslash+1, sndslash - fstslash - 1);
 				std::string trd = vertex1.substr(sndslash+1);
 				vertexIndex[0] = atoi( fst.c_str() );
-				// uvIndex[0] = atoi(snd.c_str());
+				uvIndex[0] = atoi(snd.c_str());
 				normalIndex[0] = atoi( trd.c_str() );
 
 				fstslash = vertex2.find("/");
@@ -115,7 +125,7 @@ public:
 				snd = vertex2.substr(fstslash + 1, sndslash - fstslash - 1);
 				trd = vertex2.substr(sndslash + 1);
 				vertexIndex[1] = atoi(fst.c_str());
-				// uvIndex[1] = atoi(snd.c_str());
+				uvIndex[1] = atoi(snd.c_str());
 				normalIndex[1] = atoi(trd.c_str());
 
 				fstslash = vertex3.find("/");
@@ -125,44 +135,66 @@ public:
 				snd = vertex3.substr(fstslash + 1, sndslash - fstslash - 1);
 				trd = vertex3.substr(sndslash + 1);
 				vertexIndex[2] = atoi(fst.c_str());
-				// uvIndex[2] = atoi(snd.c_str());
+				uvIndex[2] = atoi(snd.c_str());
 				normalIndex[2] = atoi(trd.c_str());
 
-
-				
 				vertexIndices.push_back(vertexIndex[0]);
 				vertexIndices.push_back(vertexIndex[1]);
 				vertexIndices.push_back(vertexIndex[2]);
-				// uvIndices.push_back(uvIndex[0]);
-				// uvIndices.push_back(uvIndex[1]);
-				// uvIndices.push_back(uvIndex[2]);
+				uvIndices.push_back(uvIndex[0]);
+				uvIndices.push_back(uvIndex[1]);
+				uvIndices.push_back(uvIndex[2]);
 				normalIndices.push_back(normalIndex[0]);
 				normalIndices.push_back(normalIndex[1]);
 				normalIndices.push_back(normalIndex[2]);
 			}
 		}
 		
+		auto update_bbox = [&](std::vector<vec3> verts){
+			for(vec3 v : verts){
+			if (v.x() < bounding_box[min_x])
+				bounding_box[min_x] = v.x();
+			if (v.x() > bounding_box[max_x])
+				bounding_box[max_x] = v.x();
 
-		for (unsigned int i = 0; i < vertexIndices.size(); i++)
+			if (v.y() < bounding_box[min_y])
+				bounding_box[min_y] = v.y();
+			if (v.y() > bounding_box[max_y])
+				bounding_box[max_y] = v.y();
+
+			if (v.z() < bounding_box[min_z])
+				bounding_box[min_z] = v.z();
+			if (v.z() > bounding_box[max_z])
+				bounding_box[max_z] = v.z();
+			}
+		};
+
+		for (unsigned int i = 0; i < vertexIndices.size(); i+=3)
 		{
-			unsigned int vertexIndex = vertexIndices[i];
-			vec3 vertex = temp_vertices[vertexIndex - 1];
-			this->vertices.push_back(vertex);
+			unsigned int v1 = vertexIndices[i];
+			unsigned int v2 = vertexIndices[i+1];
+			unsigned int v3 = vertexIndices[i+2];
 
-			if (vertex.x() < bounding_box[min_x])
-				bounding_box[min_x] = vertex.x();
-			if (vertex.x() > bounding_box[max_x])
-				bounding_box[max_x] = vertex.x();
+			std::vector<vec3> vertices;
+			vertices.push_back(temp_vertices[v1 - 1]);
+			vertices.push_back(temp_vertices[v2 - 1]);
+			vertices.push_back(temp_vertices[v3 - 1]);
 
-			if (vertex.y() < bounding_box[min_y])
-				bounding_box[min_y] = vertex.y();
-			if (vertex.y() > bounding_box[max_y])
-				bounding_box[max_y] = vertex.y();
+			std::vector<vec2f> uvs;
+			if( uvIndices.size() > 0 ){
+				uvs.push_back(temp_uvs[v1 - 1]);
+				uvs.push_back(temp_uvs[v2 - 1]);
+				uvs.push_back(temp_uvs[v3 - 1]);
+			}
 
-			if (vertex.z() < bounding_box[min_z])
-				bounding_box[min_z] = vertex.z();
-			if (vertex.z() > bounding_box[max_z])
-				bounding_box[max_z] = vertex.z();
+			vec3 normal;
+			if( normalIndices.size() > 0)
+				normal = temp_normals[v1 - 1];
+
+			Triangle t(vertices, uvs, normal);
+			tris.push_back(t);
+
+			update_bbox(vertices);
 		}
 
 		bbox_center = vec3( 
@@ -170,22 +202,9 @@ public:
 			(bounding_box[max_y] + bounding_box[min_y]) / 2.0f, 
 			(bounding_box[max_z] + bounding_box[min_z]) / 2.0f);
 
-		for (unsigned int i = 0; i < uvIndices.size(); i++)
-		{
-			unsigned int uvIndex = uvIndices[i];
-			vec2f uv = temp_uvs[uvIndex - 1];
-			this->uvs.push_back(uv);
-		}
-
-		for (unsigned int i = 0; i < normalIndices.size(); i++)
-		{
-			unsigned int normalIndex = normalIndices[i];
-			vec3 nrml = temp_normals[normalIndex - 1];
-			this->normals.push_back(nrml);
-		}
-
-		std::cout << "vertSize = " << vertexIndices.size();
-		std::cout << "normalSize = " << normalIndices.size();
+		std::cout << "vertSize = " << vertexIndices.size() << "\n";
+		std::cout << "normalSize = " << normalIndices.size() << "\n";
+		std::cout << "uvSize = " << uvIndices.size() << "\n";
 
 		return true;
 	}
@@ -193,15 +212,107 @@ public:
 
 struct Transform 
 {
-	matrix44 transf;
-	vec3 scale;
-	vec3 rotation;
-	vec3 location;
+	vec3 scale = vec3(1, 1, 1);
+	vec3 rotation = vec3(0, 0, 0);
+	vec3 location = vec3(0, 0, 0);
 };
 
-class object 
+class Obj 
 {
 public:
 	Mesh mesh;
 	Transform transform;
+
+	Obj(){}
+	Obj( const char* file_path){
+		mesh.load_mesh_from_file(file_path); transform = Transform(); 
+	}
+	
+	~Obj(){}
+
+	void scale( const vec3 &t ) {
+
+		matrix44 tr(t.x(), 0, 0, 0,
+					0, t.y(), 0, 0,
+					0, 0, t.z(), 0,
+					0, 0, 0, 1);
+
+		for ( Triangle &tri : mesh.tris) {
+			tr.multVecMatrix(tri.vert[0], tri.vert[0]);
+			tr.multVecMatrix(tri.vert[1], tri.vert[1]);
+			tr.multVecMatrix(tri.vert[2], tri.vert[2]);
+			tr.multDirMatrix(tri.normal, tri.normal);
+		}
+
+		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+
+	}
+
+	void translate(vec3 tl) {
+
+		matrix44 tr(1, 0, 0, 0,
+					0, 1, 0, 0,
+					0, 0, 1, 0,
+					tl.x(), tl.y(), tl.z(), 1);
+
+
+		for ( Triangle &tri : mesh.tris) {
+			tr.multVecMatrix(tri.vert[0], tri.vert[0]);
+			tr.multVecMatrix(tri.vert[1], tri.vert[1]);
+			tr.multVecMatrix(tri.vert[2], tri.vert[2]);
+			tr.multDirMatrix(tri.normal, tri.normal);
+		}
+
+		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+
+	}
+
+	void rot_y(float deg) {
+
+		matrix44 tr(		1,			  0,			0,			0,
+							0,			  1,			0,			0,
+							0,			  0,			1,			0,
+					-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
+		matrix44 itr = tr.inverse();
+		float sen = sin(deg*M_PI / 180.0f);
+		float co = cos(deg*M_PI / 180.0f);
+		matrix44 rot(co, 0, sen, 0,
+					0, 1, 0, 0,
+					-sen, 0, co, 0,
+					0, 0, 0, 1);
+		matrix44 result = (tr*rot)*itr;
+
+		for ( Triangle &tri : mesh.tris) {
+			result.multVecMatrix(tri.vert[0], tri.vert[0]);
+			result.multVecMatrix(tri.vert[1], tri.vert[1]);
+			result.multVecMatrix(tri.vert[2], tri.vert[2]);
+			result.multDirMatrix(tri.normal, tri.normal);
+		}
+		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+
+	}
+
+	void rot_x(float deg) {
+
+		matrix44 tr(1, 0, 0, 0,
+					0, 1, 0, 0,
+					0, 0, 1, 0,
+			-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
+		matrix44 itr = tr.inverse();
+		float sen = sin(deg*M_PI / 180.0);
+		float co = cos(deg*M_PI / 180);
+		matrix44 rot(1, 0, 0, 0,
+					0, co, -sen, 0,
+					0, sen, co, 0,
+					0, 0, 0, 1);
+		matrix44 result = (tr*rot)*itr;
+
+		for ( Triangle &tri : mesh.tris) {
+			result.multVecMatrix(tri.vert[0], tri.vert[0]);
+			result.multVecMatrix(tri.vert[1], tri.vert[1]);
+			result.multVecMatrix(tri.vert[2], tri.vert[2]);
+			result.multDirMatrix(tri.normal, tri.normal);
+		}
+		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+	}
 };

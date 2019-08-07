@@ -5,7 +5,6 @@
 #include "vec2f.h"
 #include "matrix44.h"
 
-#define M_PI 3.141592653589793
 
 class camera
 {

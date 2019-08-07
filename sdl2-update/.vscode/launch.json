@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "preLaunchTask": "compile",
-            "program": "${workspaceFolder}/tst.exe",
+            "program": "${workspaceFolder}/Renderer.exe",
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false
         }
