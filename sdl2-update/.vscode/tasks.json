@@ -1,0 +1,19 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "compile",
+            "type": "process",
+            "windows": {
+                "command": "g++",
+                "args": ["IC:\\mingw64\\include", "-LC:\\mingw64\\lib", "sdl_test.cpp", "-g", "-O3", "-w", "-lSDL2main", "-lSDL2", "-o", "Renderer.exe"],
+            },
+            "linux":{
+                "command": "g++",
+                "args": ["sdl_test.cpp", "-g", "-O3", "-w", "-lSDL2main", "-lSDL2", "-o", "Renderer.exe"],
+            },
+        }
+    ]
+}
