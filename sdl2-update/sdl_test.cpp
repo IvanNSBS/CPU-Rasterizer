@@ -11,8 +11,11 @@
 #include <algorithm>
 #include "object.h"
 
-// #include <SDL2/SDL.h>
-#include "SDL2/SDL.h"
+#ifdef _WIN32 || WIN32
+	#include "SDL2/SDL.h"
+#elif defined(__unix__)
+	#include <SDL2/SDL.h>
+#endif
 
 #define MIN 0
 #define MAX 1
@@ -168,8 +171,10 @@ int main(int argc, char* argv[])
             SDL_bool done = SDL_FALSE;
             
             Mesh monkey_mesh;
-            if (!monkey_mesh.load_mesh_from_file("./lowpolymountains.obj"))
+            if (!monkey_mesh.load_mesh_from_file("./monkey.obj"))
                 std::cout << "monkey wasnt loaded\n";
+
+			scale(0.1, 0.1, 0.1, monkey_mesh);
 
             bool mouse_down = false;
             camera cam(vec3(0, 0, 300), vec3(0, 0, -1), vec3(0, 1, 0), 60.0f, 0.1f, WIDTH, HEIGHT);
@@ -192,8 +197,9 @@ int main(int argc, char* argv[])
 
                 while (SDL_PollEvent(&event)) {
 
-					float vertical_speed = 20.0f;
-					float horizontal_speed = 1.0f;
+					float vertical_speed = 1.0f;
+					float up_speed = 0.2f;
+					float horizontal_speed = 0.10f;
 					if( event.type == SDL_KEYDOWN){
 						if( event.key.keysym.sym == SDLK_a )
 							cam.move( vec3(horizontal_speed, 0.0f, 0.0f) );
@@ -205,15 +211,15 @@ int main(int argc, char* argv[])
 							cam.move( vec3(0.0f, 0.0f, vertical_speed) );
 
 						if( event.key.keysym.sym == SDLK_q )
-							cam.move( vec3(0.00f, -vertical_speed, 0.0f) );
+							cam.move( vec3(0.00f, -up_speed, 0.0f) );
 						if( event.key.keysym.sym == SDLK_e )
-							cam.move( vec3(0.0f, vertical_speed, 0.0f) );
+							cam.move( vec3(0.0f, up_speed, 0.0f) );
 					}
 
                     if( event.type == SDL_MOUSEBUTTONDOWN )
                     {
                         //If the left mouse button was released
-                        if( event.button.button == SDL_BUTTON_LEFT )
+                        if( event.button.button == SDL_BUTTON_RIGHT )
                         { 
                             //Get the mouse offsets
                             mouse_down = true;
@@ -222,7 +228,7 @@ int main(int argc, char* argv[])
                     if( event.type == SDL_MOUSEBUTTONUP )
                     {
                         //If the left mouse button was released
-                        if( event.button.button == SDL_BUTTON_LEFT )
+                        if( event.button.button == SDL_BUTTON_RIGHT )
                         { 
                             mouse_down = false;
                         }
@@ -231,14 +237,13 @@ int main(int argc, char* argv[])
                     if( event.type == SDL_MOUSEMOTION && mouse_down ){
                         float x = event.motion.xrel;
                         float y = event.motion.yrel;
-                        // rot_x(-y, monkey_mesh, monkey_mesh.bbox_center);
-                        // rot_y(-x, monkey_mesh, monkey_mesh.bbox_center);
+                       	//rot_x(-y, monkey_mesh, monkey_mesh.bbox_center);
+                        //rot_y(-x, monkey_mesh, monkey_mesh.bbox_center);
 						
 						//WORKING!
-						// cam.rot_x(y*0.003f);
-						
-						
-						cam.rot_y(x*0.003f);
+						cam.rot_x(y*0.00001f);
+						cam.rot_y(x*0.00001f);
+						//cam.rot_z(y*3.f);
                     }
 
                     if (event.type == SDL_QUIT) {

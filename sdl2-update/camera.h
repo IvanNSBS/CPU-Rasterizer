@@ -33,14 +33,16 @@ public:
                 right = angle * aspectratio;    
                 bottom = -top; 
                 left = -right;
-                set_axis_and_matrix(from, at, up);
+                set_axis_and_matrix(from, at, up, true);
            }
 
-    void set_axis_and_matrix(const vec3& from, const vec3& at, const vec3& up)
+    void set_axis_and_matrix(const vec3& from, const vec3& at, const vec3& up, bool update_axis = false)
     {
-        axisZ = unit_vector( from-at );
-        axisY = unit_vector( up - ( axisZ * ( dot(up,axisZ)/dot(axisZ, axisZ) ) ) );
-        axisX = unit_vector( cross(axisY, axisZ) );
+        if( update_axis ){
+            axisZ = unit_vector( from-at );
+            axisY = unit_vector( up - ( axisZ * ( dot(up,axisZ)/dot(axisZ, axisZ) ) ) );
+            axisX = unit_vector( cross(axisY, axisZ) );
+        }
 
         camToWorld.x[0][0] = axisX.x(); 
         camToWorld.x[0][1] = axisX.y(); 
@@ -62,17 +64,17 @@ public:
     }
 
 	void move(vec3 dir) {
+        camToWorld.multDirMatrix(dir, dir);
 		_from += dir;
 		_at += dir;
-		set_axis_and_matrix( _from, _at, _up);
+		set_axis_and_matrix( _from, _at, _up, false);
 	}
 
     bool compute_pixel_coordinates(const vec3 &pWorld, vec2f &pRaster) 
     { 
 		vec3 ray = pWorld - _from;
 		ray.make_unit_vector();
-		vec3 lookdir = _from - _at;
-		lookdir.make_unit_vector();
+		vec3 lookdir = axisZ;
 		if ( dot(ray, lookdir) > 0.0f )
 			return false;
 
@@ -110,8 +112,9 @@ public:
                     0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
 
-        result.multVecMatrix(_at, _at);
-        result.multVecMatrix(_up, _up);
+        result.multVecMatrix(axisX, axisX);
+        result.multVecMatrix(axisY, axisY);
+        result.multVecMatrix(axisZ, axisZ);
 		set_axis_and_matrix( _from, _at, _up);
     }
 
@@ -129,8 +132,10 @@ public:
                     0, sen, co, 0,
                     0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
-        result.multVecMatrix(_at, _at);
-        result.multVecMatrix(_up, _up);
+        result.multVecMatrix(axisX, axisX);
+        result.multVecMatrix(axisY, axisY);
+        result.multVecMatrix(axisZ, axisZ);
+
 		set_axis_and_matrix( _from, _at, _up);
     }
 
@@ -148,9 +153,10 @@ public:
                      0, 0, 1, 0,
                      0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
-        result.multVecMatrix(_at, _at);
-        result.multVecMatrix(_up, _up);
-		set_axis_and_matrix( _from, _at, _up);
+        result.multVecMatrix(axisX, axisX);
+        result.multVecMatrix(axisY, axisY);
+        result.multVecMatrix(axisZ, axisZ);
+        set_axis_and_matrix( _from, _at, _up);
     }
 };
 
