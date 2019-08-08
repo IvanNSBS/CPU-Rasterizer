@@ -27,11 +27,11 @@
 
 using namespace std;
 
-static const int WIDTH = 1000;
-static const int HEIGHT = 600;
+static const int WIDTH = 450;
+static const int HEIGHT = 200;
 
 
-bool intersects_triangle( Triangle &tr, vec3 &ray_org, vec3 &ray_dir, vec3 &out_point)
+bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_col, vec3 &out_point)
 {
 	vec3 v0v1 = tr.vert[1] - tr.vert[0]; 
     vec3 v0v2 = tr.vert[2] - tr.vert[0]; 
@@ -43,7 +43,7 @@ bool intersects_triangle( Triangle &tr, vec3 &ray_org, vec3 &ray_dir, vec3 &out_
 	// ray and triangle are parallel
 	if( denom <= 0){
 		// printf("ray and triangle are parallel\n");
-		out_point = vec3(255,0,0);
+		out_col = vec3(255,0,0);
 		return false;
 	}
 	
@@ -54,7 +54,7 @@ bool intersects_triangle( Triangle &tr, vec3 &ray_org, vec3 &ray_dir, vec3 &out_
 	// triangle is behind ray
 	if( t < 0.0f ){
 		// printf("triangle is behind ray\n");
-		out_point = vec3(0,0,255);
+		out_col = vec3(0,0,255);
 		return false;
 	}
 
@@ -69,73 +69,69 @@ bool intersects_triangle( Triangle &tr, vec3 &ray_org, vec3 &ray_dir, vec3 &out_
 	vec3 C2 = phit - tr.vert[2];
 
 	// inside-outside test
-	if (dot(normal, cross(edge0, C0)) > 0 && 
-		dot(normal, cross(edge1, C1)) > 0 && 
-		dot(normal, cross(edge2, C2)) > 0)
+	if (dot(normal, cross(C0,edge0)) > 0 && 
+		dot(normal, cross(C1,edge1)) > 0 && 
+		dot(normal, cross(C2,edge2)) > 0)
 		{
 			out_point = phit;
+			out_col = vec3(0,255,0);
 			return true;
 		} 
 	else{
-		out_point = vec3(255,0,255);
+		out_col = vec3(255,0,255);
 		return false;
 	}
 }
 
 void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Renderer* renderer) {
 
-	for (auto obj : objs){
-		std::sort(obj.mesh.tris.begin(), obj.mesh.tris.end(), [](Triangle& t1, Triangle &t2)
-			{
-				std::vector<float> d1 = { t1.vert[0].z(), t1.vert[1].z(), t1.vert[2].z() };
-				std::vector<float> d2 = { t2.vert[0].z(), t2.vert[1].z(), t2.vert[2].z() };
+	// for (auto obj : objs){
+	// 	std::sort(obj.mesh.tris.begin(), obj.mesh.tris.end(), [](Triangle& t1, Triangle &t2)
+	// 		{
+	// 			std::vector<float> d1 = { t1.vert[0].z(), t1.vert[1].z(), t1.vert[2].z() };
+	// 			std::vector<float> d2 = { t2.vert[0].z(), t2.vert[1].z(), t2.vert[2].z() };
 
-				std::sort( d1.begin(), d1.end(), []( float &f1, float &f2) { return f1 > f2; } );
-				std::sort( d2.begin(), d2.end(), []( float &f1, float &f2) { return f1 > f2; } );
+	// 			std::sort( d1.begin(), d1.end(), []( float &f1, float &f2) { return f1 > f2; } );
+	// 			std::sort( d2.begin(), d2.end(), []( float &f1, float &f2) { return f1 > f2; } );
 
-				if( d1[0] != d2[0])
-					return d1[0] < d2[0];
-				else if (d1[1] != d2[1])
-					return d1[1] < d2[2];
-				else
-					return d1[2] < d2[2];
-			});
-	}
+	// 			if( d1[0] != d2[0])
+	// 				return d1[0] < d2[0];
+	// 			else if (d1[1] != d2[1])
+	// 				return d1[1] < d2[2];
+	// 			else
+	// 				return d1[2] < d2[2];
+	// 		});
+	// }
 
 
-	vec3 light(0.0f, 0.0f, -1.0f);
+	// vec3 light(0.0f, 0.0f, -1.0f);
 	// light.make_unit_vector();
 
 	for (auto obj : objs){
-		for (int i = 0; i < obj.mesh.tris.size(); i++)
-		{
-			obj.mesh.tris[i].normal.make_unit_vector();
-			vec3 normal = obj.mesh.tris[i].normal;
-
-			vec3 ray = obj.mesh.tris[i].vert[0] - cam._from;
-			if ( dot(normal, ray ) < 0.0f || true) {
-
-				float dp = dot(normal, light);
-				vec2f praster1;
-				vec2f praster2;
-				vec2f praster3;
-
-				if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[0], praster1) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[1], praster2) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[2], praster3)
-				){
+		for(int j = 0; j < HEIGHT; j++){
+			for(int i = 0; i < WIDTH; i++){
+				for (int i = 0; i < obj.mesh.tris.size(); i++)
+				{
 					vec3 col(255, 255, 255);
 					// col *= dp;
 					vec3 org(0,0,0);
-					if( intersects_triangle(obj.mesh.tris[i], cam._from, cam.axisZ, col) ){
-						col = vec3(0,255,0);
+					vec3 point;
+					float scale = tan((cam.fov * 0.5)*(M_PI/180.0f)); 
+					float x = (2 * ((i + 0.5) / (float)WIDTH) - 1) * (WIDTH/(float)HEIGHT) * scale; 
+					float y = (1 - 2 * ((j + 0.5) / (float)HEIGHT)) * scale; 
+					vec3 dir(x, y, -1); 
+					cam.camToWorld.multDirMatrix(vec3(x, y, -1), dir);
+					dir.make_unit_vector(); 
+
+					if( intersects_triangle(obj.mesh.tris[i], cam._from, dir, col, point) ){
+
+						printf("intersected!\n");
+						vec2f praster;
+						if(cam.compute_pixel_coordinates(point, praster)){
+							SDL_SetRenderDrawColor(renderer, col.x(), col.y(), col.z(), SDL_ALPHA_OPAQUE);
+							SDL_RenderDrawPoint(renderer, praster.x(), praster.y());
+						}
 					}
-
-					SDL_SetRenderDrawColor(renderer, col.x(), col.y(), col.z(), SDL_ALPHA_OPAQUE);
-					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
-					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
-					SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
-
 				}
 			}
 		}
@@ -156,10 +152,10 @@ int main(int argc, char* argv[])
             
 			std::vector<Obj> objects;
             objects.push_back( Obj("./monkey.obj") );
-            objects.push_back( Obj("./monkey.obj") );
+            // objects.push_back( Obj("./monkey.obj") );
 
 			// monkey_mesh.scale( vec3(0.1, 0.1, 0.1) );
-			objects[0].translate(vec3(2.0f, 0.0f, 0.0f));
+			// objects[0].translate(vec3(2.0f, 0.0f, 0.0f));
 
 			ImGui::CreateContext();
 			ImGuiSDL::Initialize(renderer, 800, 600);
@@ -293,7 +289,7 @@ int main(int argc, char* argv[])
                 }
 
                 ms = 1.0/ms;
-
+				printf("frametime: %f\n", ms);
             }
         }
 
