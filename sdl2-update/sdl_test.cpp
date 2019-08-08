@@ -30,6 +30,58 @@ using namespace std;
 static const int WIDTH = 1000;
 static const int HEIGHT = 600;
 
+
+bool intersects_triangle( Triangle &tr, vec3 &ray_org, vec3 &ray_dir, vec3 &out_point)
+{
+	vec3 v0v1 = tr.vert[1] - tr.vert[0]; 
+    vec3 v0v2 = tr.vert[2] - tr.vert[0]; 
+    // no need to normalize
+    vec3 normal = cross(v0v1, v0v2); // N 
+
+	float denom = dot(normal, ray_dir);
+	
+	// ray and triangle are parallel
+	if( denom <= 0){
+		// printf("ray and triangle are parallel\n");
+		out_point = vec3(255,0,0);
+		return false;
+	}
+	
+	float D = dot(normal, tr.vert[0]);
+	float numer = dot(normal, ray_org) + D;
+	float t = numer/denom;
+
+	// triangle is behind ray
+	if( t < 0.0f ){
+		// printf("triangle is behind ray\n");
+		out_point = vec3(0,0,255);
+		return false;
+	}
+
+	vec3 phit = ray_org + (ray_dir*t);
+
+
+	vec3 edge0 = tr.vert[1] - tr.vert[0]; 
+	vec3 edge1 = tr.vert[2] - tr.vert[1]; 
+	vec3 edge2 = tr.vert[0] - tr.vert[2]; 
+	vec3 C0 = phit - tr.vert[0]; 
+	vec3 C1 = phit - tr.vert[1]; 
+	vec3 C2 = phit - tr.vert[2];
+
+	// inside-outside test
+	if (dot(normal, cross(edge0, C0)) > 0 && 
+		dot(normal, cross(edge1, C1)) > 0 && 
+		dot(normal, cross(edge2, C2)) > 0)
+		{
+			out_point = phit;
+			return true;
+		} 
+	else{
+		out_point = vec3(255,0,255);
+		return false;
+	}
+}
+
 void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Renderer* renderer) {
 
 	for (auto obj : objs){
@@ -51,8 +103,8 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 	}
 
 
-	vec3 light(-40.0f, 0.0f, -1.0f);
-	light.make_unit_vector();
+	vec3 light(0.0f, 0.0f, -1.0f);
+	// light.make_unit_vector();
 
 	for (auto obj : objs){
 		for (int i = 0; i < obj.mesh.tris.size(); i++)
@@ -60,7 +112,7 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 			obj.mesh.tris[i].normal.make_unit_vector();
 			vec3 normal = obj.mesh.tris[i].normal;
 
-			vec3 ray = obj.mesh.tris[i].vert[0] -cam._from;
+			vec3 ray = obj.mesh.tris[i].vert[0] - cam._from;
 			if ( dot(normal, ray ) < 0.0f || true) {
 
 				float dp = dot(normal, light);
@@ -72,10 +124,14 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[1], praster2) &&
 					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[2], praster3)
 				){
-					vec3 col(500, 500, 500);
-					col *= dp;
+					vec3 col(255, 255, 255);
+					// col *= dp;
+					vec3 org(0,0,0);
+					if( intersects_triangle(obj.mesh.tris[i], cam._from, cam.axisZ, col) ){
+						col = vec3(0,255,0);
+					}
 
-					SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+					SDL_SetRenderDrawColor(renderer, col.x(), col.y(), col.z(), SDL_ALPHA_OPAQUE);
 					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
 					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
 					SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
@@ -109,7 +165,7 @@ int main(int argc, char* argv[])
 			ImGuiSDL::Initialize(renderer, 800, 600);
 
             bool mouse_down = false;
-            camera cam(vec3(0, 0, 300), vec3(0, 0, -1), vec3(0, 1, 0), 60.0f, 0.1f, WIDTH, HEIGHT);
+            camera cam(vec3(0, 0, 200), vec3(0, 0, -1), vec3(0, 1, 0), 60.0f, 0.1f, WIDTH, HEIGHT);
 
 			// g++ sdl_test.cpp -IC:\mingw64\include -LC:\mingw64\lib -g -O3 -w -lmingw32 -lSDL2main -lSDL2 -o tst.exe
 			double ms = -1;
@@ -179,7 +235,6 @@ int main(int argc, char* argv[])
 				ms /= CLOCKS_PER_SEC;
 				//monkey_mesh.rot_x(1.f * ms);
 				//monkey_mesh.rot_y(1.f * ms);
-                std::cout << "frametime: " << ms << "\n";
 
                 while (SDL_PollEvent(&event)) {
 
