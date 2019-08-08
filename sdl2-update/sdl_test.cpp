@@ -37,6 +37,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
     vec3 v0v2 = tr.vert[2] - tr.vert[0]; 
     // no need to normalize
     vec3 normal = cross(v0v1, v0v2); // N 
+	normal = tr.normal;
 
 	float denom = dot(normal, ray_dir);
 	
@@ -48,8 +49,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
 	}
 	
 	float D = dot(normal, tr.vert[0]);
-	float numer = dot(normal, ray_org) + D;
-	float t = numer/denom;
+	float t = (dot(normal, ray_org) + D)/denom;
 
 	// triangle is behind ray
 	if( t < 0.0f ){
@@ -60,18 +60,17 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
 
 	vec3 phit = ray_org + (ray_dir*t);
 
-
-	vec3 edge0 = tr.vert[1] - tr.vert[0]; 
-	vec3 edge1 = tr.vert[2] - tr.vert[1]; 
-	vec3 edge2 = tr.vert[0] - tr.vert[2]; 
+	vec3 edge0 = (tr.vert[1] - tr.vert[0])*-1.0f; 
+	vec3 edge1 = (tr.vert[2] - tr.vert[1])*-1.0f; 
+	vec3 edge2 = (tr.vert[0] - tr.vert[2])*-1.0f; 
 	vec3 C0 = phit - tr.vert[0]; 
 	vec3 C1 = phit - tr.vert[1]; 
 	vec3 C2 = phit - tr.vert[2];
 
 	// inside-outside test
-	if (dot(normal, cross(C0,edge0)) > 0 && 
-		dot(normal, cross(C1,edge1)) > 0 && 
-		dot(normal, cross(C2,edge2)) > 0)
+	if (dot(normal, cross(C0,edge0)) >= 0.0f && 
+		dot(normal, cross(C1,edge1)) >= 0.0f && 
+		dot(normal, cross(C2,edge2)) >= 0.0f)
 		{
 			out_point = phit;
 			out_col = vec3(0,255,0);
@@ -109,7 +108,7 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 
 	for (auto obj : objs){
 		for(int j = 0; j < HEIGHT; j++){
-			for(int i = 0; i < WIDTH; i++){
+			for(int k = 0; k < WIDTH; k++){
 				for (int i = 0; i < obj.mesh.tris.size(); i++)
 				{
 					vec3 col(255, 255, 255);
@@ -117,20 +116,19 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 					vec3 org(0,0,0);
 					vec3 point;
 					float scale = tan((cam.fov * 0.5)*(M_PI/180.0f)); 
-					float x = (2 * ((i + 0.5) / (float)WIDTH) - 1) * (WIDTH/(float)HEIGHT) * scale; 
+
+					float x = (2 * ((k + 0.5) / (float)WIDTH) - 1) * (WIDTH/(float)HEIGHT) * scale; 
 					float y = (1 - 2 * ((j + 0.5) / (float)HEIGHT)) * scale; 
+
 					vec3 dir(x, y, -1); 
 					cam.camToWorld.multDirMatrix(vec3(x, y, -1), dir);
 					dir.make_unit_vector(); 
 
 					if( intersects_triangle(obj.mesh.tris[i], cam._from, dir, col, point) ){
 
-						printf("intersected!\n");
-						vec2f praster;
-						if(cam.compute_pixel_coordinates(point, praster)){
-							SDL_SetRenderDrawColor(renderer, col.x(), col.y(), col.z(), SDL_ALPHA_OPAQUE);
-							SDL_RenderDrawPoint(renderer, praster.x(), praster.y());
-						}
+						// printf("intersected!\n");
+						SDL_SetRenderDrawColor(renderer, col.x(), col.y(), col.z(), SDL_ALPHA_OPAQUE);
+						SDL_RenderDrawPoint(renderer, k, j);
 					}
 				}
 			}
