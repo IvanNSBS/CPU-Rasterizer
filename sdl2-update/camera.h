@@ -96,7 +96,7 @@ public:
         return visible; 
     }
 
-        void rot_y(float deg) {
+    void rot_y(float deg) {
 
         matrix44 tr(		1,			  0,			0,			0,
                             0,			  1,			0,			0,

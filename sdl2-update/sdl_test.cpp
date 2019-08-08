@@ -30,57 +30,63 @@ using namespace std;
 static const int WIDTH = 1000;
 static const int HEIGHT = 600;
 
-void render_scene( Obj obj, camera &cam, SDL_Window *wind, SDL_Renderer* renderer) {
+void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Renderer* renderer) {
 
-	std::sort(obj.mesh.tris.begin(), obj.mesh.tris.end(), [](Triangle& t1, Triangle &t2)
-		{
-            std::vector<float> d1 = { t1.vert[0].z(), t1.vert[1].z(), t1.vert[2].z() };
-            std::vector<float> d2 = { t2.vert[0].z(), t2.vert[1].z(), t2.vert[2].z() };
+	for (auto obj : objs){
+		std::sort(obj.mesh.tris.begin(), obj.mesh.tris.end(), [](Triangle& t1, Triangle &t2)
+			{
+				std::vector<float> d1 = { t1.vert[0].z(), t1.vert[1].z(), t1.vert[2].z() };
+				std::vector<float> d2 = { t2.vert[0].z(), t2.vert[1].z(), t2.vert[2].z() };
 
-            std::sort( d1.begin(), d1.end(), []( float &f1, float &f2) { return f1 > f2; } );
-            std::sort( d2.begin(), d2.end(), []( float &f1, float &f2) { return f1 > f2; } );
+				std::sort( d1.begin(), d1.end(), []( float &f1, float &f2) { return f1 > f2; } );
+				std::sort( d2.begin(), d2.end(), []( float &f1, float &f2) { return f1 > f2; } );
 
-			if( d1[0] != d2[0])
-				return d1[0] < d2[0];
-			else if (d1[1] != d2[1])
-				return d1[1] < d2[2];
-			else
-				return d1[2] < d2[2];
-		});
+				if( d1[0] != d2[0])
+					return d1[0] < d2[0];
+				else if (d1[1] != d2[1])
+					return d1[1] < d2[2];
+				else
+					return d1[2] < d2[2];
+			});
+	}
 
 
 	vec3 light(-40.0f, 0.0f, -1.0f);
 	light.make_unit_vector();
 
-	for (int i = 0; i < obj.mesh.tris.size(); i++)
-	{
-		obj.mesh.tris[i].normal.make_unit_vector();
-		vec3 normal = obj.mesh.tris[i].normal;
+	for (auto obj : objs){
+		for (int i = 0; i < obj.mesh.tris.size(); i++)
+		{
+			obj.mesh.tris[i].normal.make_unit_vector();
+			vec3 normal = obj.mesh.tris[i].normal;
 
-		vec3 ray = obj.mesh.tris[i].vert[0] -cam._from;
-		if ( dot(normal, ray ) < 0.0f || true) {
+			vec3 ray = obj.mesh.tris[i].vert[0] -cam._from;
+			if ( dot(normal, ray ) < 0.0f || true) {
 
-			float dp = dot(normal, light);
-			vec2f praster1;
-			vec2f praster2;
-			vec2f praster3;
+				float dp = dot(normal, light);
+				vec2f praster1;
+				vec2f praster2;
+				vec2f praster3;
 
-			if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[0], praster1) &&
-				cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[1], praster2) &&
-				cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[2], praster3)
-			){
-				vec3 col(500, 500, 500);
-				col *= dp;
+				if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[0], praster1) &&
+					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[1], praster2) &&
+					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[2], praster3)
+				){
+					vec3 col(500, 500, 500);
+					col *= dp;
 
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-                SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
-                SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
-                SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
+					SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
+					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
+					SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
 
+				}
 			}
 		}
 	}
 }
+
+
 
 int main(int argc, char* argv[])
 {
@@ -92,10 +98,12 @@ int main(int argc, char* argv[])
             SDL_SetWindowTitle(window, "Test Title!!");
             SDL_bool done = SDL_FALSE;
             
-            Obj monkey_mesh("./monkey.obj");
+			std::vector<Obj> objects;
+            objects.push_back( Obj("./monkey.obj") );
+            objects.push_back( Obj("./monkey.obj") );
 
 			// monkey_mesh.scale( vec3(0.1, 0.1, 0.1) );
-			monkey_mesh.translate(vec3(2.0f, 0.0f, 0.0f));
+			objects[0].translate(vec3(2.0f, 0.0f, 0.0f));
 
 			ImGui::CreateContext();
 			ImGuiSDL::Initialize(renderer, 800, 600);
@@ -104,7 +112,7 @@ int main(int argc, char* argv[])
             camera cam(vec3(0, 0, 300), vec3(0, 0, -1), vec3(0, 1, 0), 60.0f, 0.1f, WIDTH, HEIGHT);
 
 			// g++ sdl_test.cpp -IC:\mingw64\include -LC:\mingw64\lib -g -O3 -w -lmingw32 -lSDL2main -lSDL2 -o tst.exe
-
+			double ms = -1;
 
 			float my_color[4];
 			bool my_tool_active;
@@ -152,19 +160,26 @@ int main(int argc, char* argv[])
 				// Display contents in a scrolling region
 				ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
 				ImGui::BeginChild("Scrolling");
-				for (int n = 0; n < 50; n++)
-					ImGui::Text("%04d: Some text", n);
+				for (int n = 0; n < 1; n++)
+					ImGui::Text("FPS: %d", (int)ms);
 				ImGui::EndChild();
 				ImGui::End();
 
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 				SDL_RenderClear(renderer);
 
-                render_scene(monkey_mesh, cam, window, renderer);
+                render_scene(objects, cam, window, renderer);
 
 				ImGui::Render();
 				ImGuiSDL::Render(ImGui::GetDrawData());
                 SDL_RenderPresent(renderer);
+
+				std::clock_t now = std::clock();
+                ms = (double)(now - then);
+				ms /= CLOCKS_PER_SEC;
+				//monkey_mesh.rot_x(1.f * ms);
+				//monkey_mesh.rot_y(1.f * ms);
+                std::cout << "frametime: " << ms << "\n";
 
                 while (SDL_PollEvent(&event)) {
 
@@ -212,9 +227,8 @@ int main(int argc, char* argv[])
                         //rot_y(-x, monkey_mesh, monkey_mesh.bbox_center);
 						
 						//WORKING!
-						cam.rot_x(y*0.00001f);
-						cam.rot_y(x*0.00001f);
-						//cam.rot_z(y*3.f);
+						cam.rot_x(y * 0.02f * ms);
+						cam.rot_y(x * 0.02f * ms);
                     }
 
                     if (event.type == SDL_QUIT) {
@@ -223,13 +237,8 @@ int main(int argc, char* argv[])
 					
                 }
 
-				monkey_mesh.rot_x(0.01f);
-				monkey_mesh.rot_y(0.01f);
-
-                std::clock_t now = std::clock();
-                double ms = (double)(now - then)/CLOCKS_PER_SEC;
                 ms = 1.0/ms;
-                // std::cout << "frametime: " << (int)ms << "\n";
+
             }
         }
 
