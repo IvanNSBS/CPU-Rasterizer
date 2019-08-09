@@ -22,15 +22,20 @@
 struct Triangle {
 	vec3 vert[3];
 	vec2f uv[3];
-	vec3 normal;
+	vec3 normal[3];
 
-	Triangle( const vec3 v[3], const vec2f t[3], const vec3 n): 
-		vert({v[0], v[1], v[2]}), uv({t[0], t[1], t[2]}), normal(n)
-	{}
-
-	Triangle( const std::vector<vec3> v, const std::vector<vec2f> t, const vec3 n): 
-		vert({v[0], v[1], v[2]}), uv({t[0], t[1], t[2]}), normal(n)
-	{}
+	Triangle( const std::vector<vec3> v, const std::vector<vec2f> t, const std::vector<vec3> n)
+	{
+		vert[0] = v[0];
+		vert[1] = v[1];
+		vert[2] = v[2];
+		uv[0] = t[0];
+		uv[1] = t[1];
+		uv[2] = t[2];
+		normal[0] = n[0];
+		normal[1] = n[1];
+		normal[2] = n[2];
+	}
 
 	~Triangle(){}
 };
@@ -175,6 +180,14 @@ public:
 			unsigned int v2 = vertexIndices[i+1];
 			unsigned int v3 = vertexIndices[i+2];
 
+			unsigned int n1 = normalIndices[i];
+			unsigned int n2 = normalIndices[i+1];
+			unsigned int n3 = normalIndices[i+2];
+
+			unsigned int uv1 = uvIndices[i];
+			unsigned int uv2 = uvIndices[i+1];
+			unsigned int uv3 = uvIndices[i]+2;
+
 			std::vector<vec3> vertices;
 			vertices.push_back(temp_vertices[v1 - 1]);
 			vertices.push_back(temp_vertices[v2 - 1]);
@@ -182,16 +195,20 @@ public:
 
 			std::vector<vec2f> uvs;
 			if( uvIndices.size() > 0 ){
-				uvs.push_back(temp_uvs[v1 - 1]);
-				uvs.push_back(temp_uvs[v2 - 1]);
-				uvs.push_back(temp_uvs[v3 - 1]);
+				uvs.push_back(temp_uvs[uv1 - 1]);
+				uvs.push_back(temp_uvs[uv2 - 1]);
+				uvs.push_back(temp_uvs[uv3 - 1]);
 			}
 
-			vec3 normal;
-			if( normalIndices.size() > 0)
-				normal = temp_normals[v1 - 1];
+			std::vector<vec3> normals;
+			if( normalIndices.size() > 0){
 
-			Triangle t(vertices, uvs, normal);
+				normals.push_back(temp_normals[n1 - 1]);
+				normals.push_back(temp_normals[n2 - 1]);
+				normals.push_back(temp_normals[n3 - 1]);
+			}
+
+			Triangle t(vertices, uvs, normals);
 			tris.push_back(t);
 
 			update_bbox(vertices);
@@ -222,10 +239,12 @@ class Obj
 public:
 	Mesh mesh;
 	Transform transform;
+	vec3 col;
 
 	Obj(){}
 	Obj( const char* file_path){
 		mesh.load_mesh_from_file(file_path); transform = Transform(); 
+		col = vec3(255,255,255);
 	}
 	
 	~Obj(){}
@@ -241,7 +260,10 @@ public:
 			tr.multVecMatrix(tri.vert[0], tri.vert[0]);
 			tr.multVecMatrix(tri.vert[1], tri.vert[1]);
 			tr.multVecMatrix(tri.vert[2], tri.vert[2]);
-			tr.multDirMatrix(tri.normal, tri.normal);
+
+			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
+			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
+			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
 		}
 
 		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
@@ -260,7 +282,9 @@ public:
 			tr.multVecMatrix(tri.vert[0], tri.vert[0]);
 			tr.multVecMatrix(tri.vert[1], tri.vert[1]);
 			tr.multVecMatrix(tri.vert[2], tri.vert[2]);
-			tr.multDirMatrix(tri.normal, tri.normal);
+			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
+			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
+			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
 		}
 
 		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
@@ -286,7 +310,9 @@ public:
 			result.multVecMatrix(tri.vert[0], tri.vert[0]);
 			result.multVecMatrix(tri.vert[1], tri.vert[1]);
 			result.multVecMatrix(tri.vert[2], tri.vert[2]);
-			result.multDirMatrix(tri.normal, tri.normal);
+			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
+			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
+			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
 		}
 		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
 
@@ -311,7 +337,9 @@ public:
 			result.multVecMatrix(tri.vert[0], tri.vert[0]);
 			result.multVecMatrix(tri.vert[1], tri.vert[1]);
 			result.multVecMatrix(tri.vert[2], tri.vert[2]);
-			result.multDirMatrix(tri.normal, tri.normal);
+			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
+			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
+			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
 		}
 		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
 	}

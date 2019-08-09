@@ -11,7 +11,8 @@
             "preLaunchTask": "compile",
             "program": "${workspaceFolder}/Renderer.exe",
             "cwd": "${workspaceFolder}",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "miDebuggerPath": "C:\\mingw64\\bin\\gdb.exe"
         }
     ]
 }

@@ -27,7 +27,7 @@ public:
 		   _from(from), _at(at), _up(up)
            {
                 float aspectratio = iwidth/iheight;
-                float angle = std::tan((f*0.5)*M_PI/180) * _near;
+                float angle = std::tan((f*0.5f)*3.14f/180.0f) * _near;
                 top = angle; 
                 right = angle * aspectratio;    
                 bottom = -top; 
@@ -80,8 +80,8 @@ public:
         vec3 pCamera; 
         worldToCamera.multVecMatrix(pWorld, pCamera); 
         vec2f pScreen; 
-        pScreen[0] = pCamera.x() / (-pCamera.z() * _near); 
-        pScreen[1] = pCamera.y() / (-pCamera.z() * _near); 
+        pScreen[0] = pCamera.x() / (-pCamera.z()); 
+        pScreen[1] = pCamera.y() / (-pCamera.z()); 
     
         vec2f pNDC; 
         pNDC[0] = (pScreen.x() + right) / (2 * right); 
