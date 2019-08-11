@@ -12,6 +12,7 @@ public:
     
     vec3(){}
     vec3(float e0, float e1, float e2) { e[0] = e0, e[1] = e1, e[2] = e2; }
+    vec3(float e0) { e[0] = e0, e[1] = e0, e[2] = e0; }
     inline float x() const { return e[0]; }
     inline float y() const { return e[1]; }
     inline float z() const { return e[2]; }
@@ -33,6 +34,7 @@ public:
 
     inline float length() const{ return sqrt(e[0]*e[0] + e[1]*e[1] + e[2]*e[2]); }
     inline float squared_length() const{ return e[0]*e[0] + e[1]*e[1] + e[2]*e[2]; }
+    inline float get_luminance(){ return 0.2126*e[0] + 0.7152*e[1] + 0.0722*e[2];}
     inline void make_unit_vector();
 };
 

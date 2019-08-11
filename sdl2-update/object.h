@@ -186,7 +186,7 @@ public:
 
 			unsigned int uv1 = uvIndices[i];
 			unsigned int uv2 = uvIndices[i+1];
-			unsigned int uv3 = uvIndices[i]+2;
+			unsigned int uv3 = uvIndices[i+2];
 
 			std::vector<vec3> vertices;
 			vertices.push_back(temp_vertices[v1 - 1]);
@@ -291,33 +291,7 @@ public:
 
 	}
 
-	void rot_y(float deg) {
-
-		matrix44 tr(		1,			  0,			0,			0,
-							0,			  1,			0,			0,
-							0,			  0,			1,			0,
-					-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
-		matrix44 itr = tr.inverse();
-		float sen = sin(deg*M_PI / 180.0f);
-		float co = cos(deg*M_PI / 180.0f);
-		matrix44 rot(co, 0, sen, 0,
-					0, 1, 0, 0,
-					-sen, 0, co, 0,
-					0, 0, 0, 1);
-		matrix44 result = (tr*rot)*itr;
-
-		for ( Triangle &tri : mesh.tris) {
-			result.multVecMatrix(tri.vert[0], tri.vert[0]);
-			result.multVecMatrix(tri.vert[1], tri.vert[1]);
-			result.multVecMatrix(tri.vert[2], tri.vert[2]);
-			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
-			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
-			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
-		}
-		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
-
-	}
-
+	
 	void rot_x(float deg) {
 
 		matrix44 tr(1, 0, 0, 0,
@@ -337,10 +311,68 @@ public:
 			result.multVecMatrix(tri.vert[0], tri.vert[0]);
 			result.multVecMatrix(tri.vert[1], tri.vert[1]);
 			result.multVecMatrix(tri.vert[2], tri.vert[2]);
-			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
-			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
-			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
+
+			result.multDirMatrix(tri.normal[0], tri.normal[0]);
+			result.multDirMatrix(tri.normal[1], tri.normal[1]);
+			result.multDirMatrix(tri.normal[2], tri.normal[2]);
 		}
 		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+	}
+
+
+	void rot_y(float deg) {
+
+		matrix44 tr(		1,			  0,			0,			0,
+							0,			  1,			0,			0,
+							0,			  0,			1,			0,
+					-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
+		matrix44 itr = tr.inverse();
+		float sen = sin(deg*M_PI / 180.0f);
+		float co = cos(deg*M_PI / 180.0f);
+		matrix44 rot(co, 0, sen, 0,
+					0, 1, 0, 0,
+					-sen, 0, co, 0,
+					0, 0, 0, 1);
+		matrix44 result = (tr*rot)*itr;
+
+		for ( Triangle &tri : mesh.tris) {
+			result.multVecMatrix(tri.vert[0], tri.vert[0]);
+			result.multVecMatrix(tri.vert[1], tri.vert[1]);
+			result.multVecMatrix(tri.vert[2], tri.vert[2]);
+			
+			result.multDirMatrix(tri.normal[0], tri.normal[0]);
+			result.multDirMatrix(tri.normal[1], tri.normal[1]);
+			result.multDirMatrix(tri.normal[2], tri.normal[2]);
+		}
+		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+
+	}
+
+	void rot_z(float deg) {
+
+		matrix44 tr(		1,			  0,			0,			0,
+							0,			  1,			0,			0,
+							0,			  0,			1,			0,
+					-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
+		matrix44 itr = tr.inverse();
+		float sen = sin(deg*M_PI / 180.0f);
+		float co = cos(deg*M_PI / 180.0f);
+		matrix44 rot( co, -sen,  0,   0,
+					 sen,   co,  0,   0,
+					   0,    0,  1,   0,
+					   0,    0,  0,   1);
+		matrix44 result = (tr*rot)*itr;
+
+		for ( Triangle &tri : mesh.tris) {
+			result.multVecMatrix(tri.vert[0], tri.vert[0]);
+			result.multVecMatrix(tri.vert[1], tri.vert[1]);
+			result.multVecMatrix(tri.vert[2], tri.vert[2]);
+
+			result.multDirMatrix(tri.normal[0], tri.normal[0]);
+			result.multDirMatrix(tri.normal[1], tri.normal[1]);
+			result.multDirMatrix(tri.normal[2], tri.normal[2]);
+		}
+		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+
 	}
 };

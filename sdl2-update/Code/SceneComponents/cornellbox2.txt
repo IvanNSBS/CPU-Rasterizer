@@ -1,0 +1,38 @@
+#canvas(image width and height)
+Canvas 320 240
+
+#SceneOptions(tmin, tmax, raysPerPixel, maxRayDepth)
+Options 0.001 10000000 100 10
+
+#camera(position, target, up, fov, near), usa modelo lookfrom-lookat
+Camera 0 8 0 0 6 -10 0 1 0 50 1
+
+#Materials(types are : Diffuse, Conductor, Dielectric, Light) -> obs:kd e ks são vetores 
+#entrada p/ diffuse : r b g kdx kdy kdz ksx ksy ksz alpha
+#entrada p/ conductor : r b g kdx kdy kdz ksx ksy ksz alpha fuzz (0 <= fuzz <= 1, dita o quao polido é o metal(0 é 100% polido))
+#entrada p/ dielectric : ior r g b
+#entrada p/ light : r g b intensity
+Conductor 0.25 0.25 0.25 0.4 0.4 0.4 0.774597 0.774597 0.774597 76.8 0 Chrome
+Diffuse 0.65 0.03 0.03 0.90 0.03 0.03 0.0 0.0 0.0 1.0 Red
+Diffuse 0.12 0.45 0.15 0.12 0.75 0.15 0.0 0.0 0.0 1.0 Green
+Diffuse 0.73 0.73 0.73 0.93 0.93 0.93 0.0 0.0 0.0 1.0 White
+Dielectric 2.437 1.0 1.0 1.0 Di
+Dielectric 1.5 1.0 1.0 1.0 Dii
+Light 1.0 1.0 1.0 2.0 LSource
+
+#Objects (apenas esferas)
+Sphere 0.0 -5011.0 -0.0 5000.0 White #ground
+Sphere 0.0 5011.0 0.0 5000.0 White #roof
+Sphere 0.0 0.0 -550.0 500.0 White #back wall
+Sphere 5015.0 -27.0 0.0 5000.0 Green #wall right
+Sphere -5015.0 -27.0 0.0 5000.0 Red #wall right
+Sphere 0.0 10.5 -35.0 2.0 LSource
+#Sphere -12.0 12.8 -25.0 4.0 LSource
+#Sphere 12.0 12.8 -25.0 4.0 LSource
+Sphere 0.0 -3.9 -40.0 7.0 Chrome 
+Sphere -11.0 -7.0 -30.0 4.0 Dii
+Sphere 11.0 -7.0 -30.0  4.0 Red
+#Sphere 8.0 -7.0 -45.0 4.0 Di 
+
+#FileName(salvo na pasta RenderedImages)
+Filename UHD_CAM2

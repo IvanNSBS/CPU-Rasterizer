@@ -18,6 +18,7 @@
 
 #ifdef _WIN32 || WIN32
 	#include "SDL2/SDL.h"
+	#undef main
 #elif defined(__unix__)
 	#include <SDL2/SDL.h>
 #endif
@@ -27,8 +28,8 @@
 #define PI 3.14159265
 
 
-static const int WIDTH = 450;
-static const int HEIGHT = 200;
+static const int WIDTH = 800;
+static const int HEIGHT = 600;
 
 
 bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_col, vec3 &out_point, float &t)
@@ -94,110 +95,115 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 	vec3 light(0.0f, 0.0f, -1.0f);
 	// light.make_unit_vector();
 
-	for (auto obj : objs){
-		for (int i = 0; i < obj.mesh.tris.size(); i++)
-		{
-			vec3 normal = obj.mesh.tris[i].normal[0];
-
-			vec3 ray = obj.mesh.tris[i].vert[0] - cam._from;
-			if ( dot(normal, ray ) < 0.0f || true) {
-
-				float dp = dot(normal, light);
-				vec2f praster1;
-				vec2f praster2;
-				vec2f praster3;
-
-				if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[0], praster1) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[1], praster2) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[2], praster3)
-				){
-					vec3 col(255, 255, 255);
-					// col *= dp;
-					vec3 org(0,0,0);
-					// if( intersects_triangle(obj.mesh.tris[i], cam._from, cam.axisZ, col) ){
-					// 	col = vec3(0,255,0);
-					// }
-
-					SDL_SetRenderDrawColor(renderer, obj.col.x(), obj.col.y(), obj.col.z(), SDL_ALPHA_OPAQUE);
-					// SDL_RenderDrawPoint(renderer, praster1[0], praster1[1]);
-					// SDL_RenderDrawPoint(renderer, praster3[0], praster3[1]);
-					// SDL_RenderDrawPoint(renderer, praster2[0], praster2[1]);
-
-					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
-					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
-					SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
-				}
-			}
-		}
-	}
-
-	// vec3 col, point;
-
-	// float invWidth = 1 / float(WIDTH), invHeight = 1 / float(HEIGHT); 
-	// float aspectratio = WIDTH / float(HEIGHT); 
-	// //Angulo de abertura da camera
-	// float angle = tan((cam.fov * 0.5f) * (M_PI / 180.0f)) * cam._near ; //Multiplica pelo near (zoom)
-	// float half_width = angle * aspectratio;
-	// float half_height = angle;
-
 	// for (auto obj : objs){
-	// 	for(int y = 0; y < HEIGHT; y++){
-	// 		for(int x = 0; x < WIDTH; x++){
-	// 			float bt = 1000.f;
-	// 			float bt_old = 1000.f;
-	// 			vec3 out_col;
-	// 			for (int idx = 0; idx < obj.mesh.tris.size(); idx++)
-	// 			{
-	// 				//Converte o ponto x do canvas para raster space
-	// 				//Multiplica pelo aspectratio, pois o canvas pode nao ser quadrado e gerar distorcao
-	// 				float Px = (2.0 * ( ( x ) * invWidth) - 1.0) * half_width; 
-	// 				float Py = (1.0 - 2.0 * ( ( y ) * invHeight)) * half_height; 
+	// 	for (int i = 0; i < obj.mesh.tris.size(); i++)
+	// 	{
+	// 		vec3 normal = obj.mesh.tris[i].normal[0];
 
-	// 				vec3 dir = vec3(Px, Py, -1);
-	// 				cam.camToWorld.multDirMatrix(dir, dir);
-	// 				dir.make_unit_vector();
-	// 				//dir.Normalize();
+	// 		vec3 ray = obj.mesh.tris[i].vert[0] - cam._from;
+	// 		if ( dot(normal, ray ) < 0.0f || true) {
 
-	// 				if( intersects_triangle(obj.mesh.tris[idx], cam._from, dir, col, point, bt) ){
-	// 					//printf("intersected!\n");
-	// 					if( bt < bt_old){
-	// 						bt_old = bt;
-	// 						out_col = col;
-	// 					}
-	// 				}
-	// 			}
+	// 			float dp = dot(normal, light);
+	// 			vec2f praster1;
+	// 			vec2f praster2;
+	// 			vec2f praster3;
 
-	// 			if( bt_old < 1000.0f){
-	// 				SDL_SetRenderDrawColor(renderer, out_col.x(), out_col.y(), out_col.z(), SDL_ALPHA_OPAQUE);
-	// 				SDL_RenderDrawPoint(renderer, x, y);
+	// 			if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[0], praster1) &&
+	// 				cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[1], praster2) &&
+	// 				cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[2], praster3)
+	// 			){
+	// 				vec3 col(255, 255, 255);
+	// 				// col *= dp;
+	// 				vec3 org(0,0,0);
+	// 				// if( intersects_triangle(obj.mesh.tris[i], cam._from, cam.axisZ, col) ){
+	// 				// 	col = vec3(0,255,0);
+	// 				// }
+
+	// 				SDL_SetRenderDrawColor(renderer, obj.col.x(), obj.col.y(), obj.col.z(), SDL_ALPHA_OPAQUE);
+	// 				// SDL_RenderDrawPoint(renderer, praster1[0], praster1[1]);
+	// 				// SDL_RenderDrawPoint(renderer, praster3[0], praster3[1]);
+	// 				// SDL_RenderDrawPoint(renderer, praster2[0], praster2[1]);
+
+	// 				SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
+	// 				SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
+	// 				SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
 	// 			}
 	// 		}
 	// 	}
-	// }	
+	// }
+
+	vec3 col, point;
+
+	float invWidth = 1 / float(WIDTH), invHeight = 1 / float(HEIGHT); 
+	float aspectratio = WIDTH / float(HEIGHT); 
+	//Angulo de abertura da camera
+	float angle = tan((cam.fov * 0.5f) * (M_PI / 180.0f)) * cam._near ; //Multiplica pelo near (zoom)
+	float half_width = angle * aspectratio;
+	float half_height = angle;
+
+	for (auto obj : objs){
+		for(int y = 0; y < HEIGHT; y++){
+			for(int x = 0; x < WIDTH; x++){
+				float bt = 1000.f;
+				float bt_old = 1000.f;
+				vec3 out_col;
+				for (int idx = 0; idx < obj.mesh.tris.size(); idx++)
+				{
+					//Converte o ponto x do canvas para raster space
+					//Multiplica pelo aspectratio, pois o canvas pode nao ser quadrado e gerar distorcao
+					float Px = (2.0 * ( ( x ) * invWidth) - 1.0) * half_width; 
+					float Py = (1.0 - 2.0 * ( ( y ) * invHeight)) * half_height; 
+
+					vec3 dir = vec3(Px, Py, -1);
+					cam.camToWorld.multDirMatrix(dir, dir);
+					dir.make_unit_vector();
+					//dir.Normalize();
+
+					if( intersects_triangle(obj.mesh.tris[idx], cam._from, dir, col, point, bt) ){
+						//printf("intersected!\n");
+						if( bt < bt_old){
+							bt_old = bt;
+							out_col = col;
+						}
+					}
+				}
+
+				if( bt_old < 1000.0f){
+					SDL_SetRenderDrawColor(renderer, out_col.x(), out_col.y(), out_col.z(), SDL_ALPHA_OPAQUE);
+					SDL_RenderDrawPoint(renderer, x, y);
+				}
+			}
+		}
+	}	
 
 }
 
 
 
-int main(int argc, char* argv[])
+int main()
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
-        SDL_Window* window = NULL;
-        SDL_Renderer* renderer = NULL;
 
-        if (SDL_CreateWindowAndRenderer(WIDTH, HEIGHT, 0, &window, &renderer) == 0) {
-            SDL_SetWindowTitle(window, "Test Title!!");
+		SDL_Window* window = SDL_CreateWindow("SDL2 ImGui Renderer", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_WINDOW_ALLOW_HIGHDPI);
+		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+        if ( true ) {
+            // SDL_SetWindowTitle(window, "Test Title!!");
             SDL_bool done = SDL_FALSE;
 			SDL_SetRelativeMouseMode(SDL_FALSE);
             
 			std::vector<Obj> objects;
+            // objects.push_back( Obj("./cornelbox.obj") );
             objects.push_back( Obj("./monkey_smooth.obj") );
+			objects[0].rot_x(34.6);
+			objects[0].rot_y(-50.f);
+			objects[0].rot_z(-4.56f);
             // objects.push_back( Obj("./monkey.obj") );
 
 			// monkey_mesh.scale( vec3(0.1, 0.1, 0.1) );
 			// objects[0].translate(vec3(2.0f, 0.0f, 0.0f));
 			ImGui::CreateContext();
-			ImGuiSDL::Initialize(renderer, 800, 600);
+			ImGuiSDL::Initialize(renderer, WIDTH, HEIGHT);
 
             bool mouse_down = false;
             camera cam(vec3(0, 0, 20), vec3(0, 0, -1), vec3(0, 1, 0), 60.0f, 0.1f, WIDTH, HEIGHT);
@@ -259,8 +265,8 @@ int main(int argc, char* argv[])
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 				SDL_RenderClear(renderer);
 
-                render_scene(objects, cam, window, renderer);
 
+                render_scene(objects, cam, window, renderer);
 				ImGui::Render();
 				// ImGuiSDL::Render(ImGui::GetDrawData());
                 SDL_RenderPresent(renderer);
