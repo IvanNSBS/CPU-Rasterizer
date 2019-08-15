@@ -578,8 +578,10 @@ namespace ImGuiSDL
 					static_cast<int>(drawCommand->ClipRect.z - drawCommand->ClipRect.x),
 					static_cast<int>(drawCommand->ClipRect.w - drawCommand->ClipRect.y)
 				};
-				// CurrentDevice->SetClipRect(clipRect);
-
+				#ifdef not(_WIN32 || WIN32)
+					CurrentDevice->SetClipRect(clipRect);
+				#endif
+				
 				if (drawCommand->UserCallback)
 				{
 					drawCommand->UserCallback(commandList, drawCommand);
