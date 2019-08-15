@@ -27,7 +27,7 @@ public:
 		   _from(from), _at(at), _up(up)
            {
                 float aspectratio = iwidth/iheight;
-                float angle = std::tan((f*0.5f)*3.14f/180.0f) * _near;
+                float angle = std::tan((f*0.5f)*3.14f/180.0f);
                 top = angle; 
                 right = angle * aspectratio;    
                 bottom = -top; 
@@ -80,8 +80,8 @@ public:
         vec3 pCamera; 
         worldToCamera.multVecMatrix(pWorld, pCamera); 
         vec2f pScreen; 
-        pScreen[0] = pCamera.x() / (-pCamera.z()); 
-        pScreen[1] = pCamera.y() / (-pCamera.z()); 
+        pScreen[0] = pCamera.x() * _near / (-pCamera.z()); 
+        pScreen[1] = pCamera.y() * _near / (-pCamera.z()); 
     
         vec2f pNDC; 
         pNDC[0] = (pScreen.x() + right) / (2 * right); 
@@ -94,6 +94,27 @@ public:
             visible = false;*/ 
     
         return visible; 
+    }
+
+    void rot_x(float deg) {
+
+        matrix44 tr(1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+            -_from.x(), -_from.y(), -_from.z(), 1);
+        matrix44 itr = tr.inverse();
+        float sen = sin(deg*3.14 / 180.0);
+        float co = cos(deg*3.14 / 180);
+        matrix44 rot(1, 0, 0, 0,
+                    0, co, -sen, 0,
+                    0, sen, co, 0,
+                    0, 0, 0, 1);
+        matrix44 result = (tr*rot)*itr;
+        result.multDirMatrix(axisX, axisX);
+        result.multDirMatrix(axisY, axisY);
+        result.multDirMatrix(axisZ, axisZ);
+
+		set_axis_and_matrix( _from, _at, _up);
     }
 
     void rot_y(float deg) {
@@ -111,30 +132,9 @@ public:
                     0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
 
-        result.multVecMatrix(axisX, axisX);
-        result.multVecMatrix(axisY, axisY);
-        result.multVecMatrix(axisZ, axisZ);
-		set_axis_and_matrix( _from, _at, _up);
-    }
-
-    void rot_x(float deg) {
-
-        matrix44 tr(1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-            -_from.x(), -_from.y(), -_from.z(), 1);
-        matrix44 itr = tr.inverse();
-        float sen = sin(deg*3.14 / 180.0);
-        float co = cos(deg*3.14 / 180);
-        matrix44 rot(1, 0, 0, 0,
-                    0, co, -sen, 0,
-                    0, sen, co, 0,
-                    0, 0, 0, 1);
-        matrix44 result = (tr*rot)*itr;
-        result.multVecMatrix(axisX, axisX);
-        result.multVecMatrix(axisY, axisY);
-        result.multVecMatrix(axisZ, axisZ);
-
+        result.multDirMatrix(axisX, axisX);
+        result.multDirMatrix(axisY, axisY);
+        result.multDirMatrix(axisZ, axisZ);
 		set_axis_and_matrix( _from, _at, _up);
     }
 
@@ -152,9 +152,9 @@ public:
                      0, 0, 1, 0,
                      0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
-        result.multVecMatrix(axisX, axisX);
-        result.multVecMatrix(axisY, axisY);
-        result.multVecMatrix(axisZ, axisZ);
+        result.multDirMatrix(axisX, axisX);
+        result.multDirMatrix(axisY, axisY);
+        result.multDirMatrix(axisZ, axisZ);
         set_axis_and_matrix( _from, _at, _up);
     }
 };
