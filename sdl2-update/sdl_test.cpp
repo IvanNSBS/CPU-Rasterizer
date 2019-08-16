@@ -213,10 +213,11 @@ int main(int argc, char* argv[])
 				ImGui::Text("FPS: %d", (int)ms);
 				ImGui::Text("Cam Rotation: (%f, %f, %f)", cam.rotation.x(), cam.rotation.y(), cam.rotation.z());
 				ImGui::Text("Cam Position: (%f, %f, %f)", cam._from.x(), cam._from.y(), cam._from.z());
+				ImGui::Text("Color: (%f, %f, %f)", my_color[0]*255.0, my_color[1]*255.0, my_color[2]*255.0, my_color[3]*255.0);
 				ImGui::EndChild();
 				ImGui::End();
 
-				SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+				SDL_SetRenderDrawColor(renderer, my_color[0]*255, my_color[1]*255, my_color[2]*255, my_color[3]*255);
 				SDL_RenderClear(renderer);
 
 
