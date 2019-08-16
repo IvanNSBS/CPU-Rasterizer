@@ -149,9 +149,9 @@ int main(int argc, char* argv[])
 			std::vector<Obj> objects;
             // objects.push_back( Obj("./cornelbox.obj") );
             objects.push_back( Obj("./monkey_smooth.obj") );
-			objects[0].rot_x(34.6);
-			objects[0].rot_y(-50.f);
-			objects[0].rot_z(-4.56f);
+			// objects[0].rot_x(34.6);
+			// objects[0].rot_y(-50.f);
+			// objects[0].rot_z(-4.56f);
 
 			// monkey_mesh.scale( vec3(0.1, 0.1, 0.1) );
 			// objects[0].translate(vec3(2.0f, 0.0f, 0.0f));
@@ -323,11 +323,13 @@ int main(int argc, char* argv[])
                         //rot_y(-x, monkey_mesh, monkey_mesh.bbox_center);
 						
 						//WORKING!
-						// cam._at += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
-						// cam.rotation += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
-						// cam.set_axis_and_matrix(cam._from, cam._at, cam._up, true);
-						cam.rot_x(y * 50.f * ms);
-						cam.rot_y(x * 50.f * ms);
+						vec3 rot(x * 15.f * ms, -y * 15.f * ms, 0);
+						cam.camToWorld.multDirMatrix(rot, rot);
+						cam._at += rot;
+						cam.rotation += vec3(x * 15.f * ms, -y * 15.f * ms, 0);;
+						cam.set_axis_and_matrix(cam._from, cam._at, cam._up, true);
+						// cam.rot_x(y * 50.f * ms);
+						// cam.rot_y(x * 50.f * ms);
                     }
 
                     if (event.type == SDL_QUIT) {

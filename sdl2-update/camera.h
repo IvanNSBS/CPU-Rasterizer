@@ -44,6 +44,11 @@ public:
             axisY = unit_vector( up - ( axisZ * ( dot(up,axisZ)/dot(axisZ, axisZ) ) ) );
             axisX = unit_vector( cross(axisY, axisZ) );
         }
+        else{
+            axisX.make_unit_vector();
+            axisY.make_unit_vector();
+            axisZ.make_unit_vector();
+        }
 
         camToWorld.x[0][0] = axisX.x(); 
         camToWorld.x[0][1] = axisX.y(); 
@@ -100,43 +105,49 @@ public:
 
     void rot_x(float deg) {
 
-        matrix44 tr(1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-            -_from.x(), -_from.y(), -_from.z(), 1);
-        matrix44 itr = tr.inverse();
-        float sen = sin(deg*3.14 / 180.0);
-        float co = cos(deg*3.14 / 180);
+        float sen = sin(deg*3.14 / 180.0f);
+        float co = cos(deg*3.14 / 180.0f);
         matrix44 rot(1, 0, 0, 0,
                     0, co, -sen, 0,
                     0, sen, co, 0,
                     0, 0, 0, 1);
-        matrix44 result = (tr*rot)*itr;
-
-        result.multVecMatrix(_at,_at);
-        result.multDirMatrix(_up,_up);
-        rotation[0] += deg;
-		set_axis_and_matrix( _from, _at, _up, true);
-    }
-
-    void rot_y(float deg) {
 
         matrix44 tr(		1,			  0,			0,			0,
                             0,			  1,			0,			0,
                             0,			  0,			1,			0,
                     -_from.x(), -_from.y(), -_from.z(), 1);
         matrix44 itr = tr.inverse();
+        matrix44 result = (tr*rot)*itr;
+        result.multVecMatrix(_at,_at);
+        result.multDirMatrix(_up,_up);
+        _up.make_unit_vector();
+
+		set_axis_and_matrix( _from, _at, _up, true);
+
+
+    }
+
+    void rot_y(float deg) {
+
         float sen = sin(deg*3.14 / 180.0f);
         float co = cos(deg*3.14 / 180.0f);
         matrix44 rot(co, 0, sen, 0,
                     0, 1, 0, 0,
                     -sen, 0, co, 0,
                     0, 0, 0, 1);
+
+        matrix44 tr(		1,			  0,			0,			0,
+                            0,			  1,			0,			0,
+                            0,			  0,			1,			0,
+                    -_from.x(), -_from.y(), -_from.z(), 1);
+        matrix44 itr = tr.inverse();
+
         matrix44 result = (tr*rot)*itr;
         result.multVecMatrix(_at,_at);
         result.multDirMatrix(_up,_up);
-		set_axis_and_matrix( _from, _at, _up);
-        rotation[1] += deg;
+        _up.make_unit_vector();
+
+		set_axis_and_matrix( _from, _at, _up, true);
 
     }
 
