@@ -212,6 +212,7 @@ int main(int argc, char* argv[])
 				ImGui::BeginChild("Scrolling");
 				ImGui::Text("FPS: %d", (int)ms);
 				ImGui::Text("Cam Rotation: (%f, %f, %f)", cam.rotation.x(), cam.rotation.y(), cam.rotation.z());
+				ImGui::Text("Cam Position: (%f, %f, %f)", cam._from.x(), cam._from.y(), cam._from.z());
 				ImGui::EndChild();
 				ImGui::End();
 
@@ -321,11 +322,11 @@ int main(int argc, char* argv[])
                         //rot_y(-x, monkey_mesh, monkey_mesh.bbox_center);
 						
 						//WORKING!
-						cam._at += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
-						cam.rotation += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
-						cam.set_axis_and_matrix(cam._from, cam._at, cam._up, true);
-						// cam.rot_x(y * 15.f * ms);
-						// cam.rot_y(x * 15.f * ms);
+						// cam._at += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
+						// cam.rotation += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
+						// cam.set_axis_and_matrix(cam._from, cam._at, cam._up, true);
+						cam.rot_x(y * 50.f * ms);
+						cam.rot_y(x * 50.f * ms);
                     }
 
                     if (event.type == SDL_QUIT) {

@@ -112,12 +112,11 @@ public:
                     0, sen, co, 0,
                     0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
-        result.multDirMatrix(axisX, axisX);
-        result.multDirMatrix(axisY, axisY);
-        result.multDirMatrix(axisZ, axisZ);
 
+        result.multVecMatrix(_at,_at);
+        result.multDirMatrix(_up,_up);
         rotation[0] += deg;
-		set_axis_and_matrix( _from, _at, _up);
+		set_axis_and_matrix( _from, _at, _up, true);
     }
 
     void rot_y(float deg) {
@@ -134,12 +133,9 @@ public:
                     -sen, 0, co, 0,
                     0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
-
-        result.multDirMatrix(axisX, axisX);
-        result.multDirMatrix(axisY, axisY);
-        result.multDirMatrix(axisZ, axisZ);
+        result.multVecMatrix(_at,_at);
+        result.multDirMatrix(_up,_up);
 		set_axis_and_matrix( _from, _at, _up);
-        
         rotation[1] += deg;
 
     }
@@ -158,10 +154,9 @@ public:
                      0, 0, 1, 0,
                      0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
-        result.multDirMatrix(axisX, axisX);
-        result.multDirMatrix(axisY, axisY);
-        result.multDirMatrix(axisZ, axisZ);
-        set_axis_and_matrix( _from, _at, _up);
+        result.multVecMatrix(_at,_at);
+        result.multDirMatrix(_up,_up);
+        set_axis_and_matrix( _from, _at, _up, true);
         rotation[2] += deg;
     }
 };
