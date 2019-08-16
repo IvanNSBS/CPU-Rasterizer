@@ -321,8 +321,11 @@ int main(int argc, char* argv[])
                         //rot_y(-x, monkey_mesh, monkey_mesh.bbox_center);
 						
 						//WORKING!
-						cam.rot_x(y * 15.f * ms);
-						cam.rot_y(x * 15.f * ms);
+						cam._at += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
+						cam.rotation += vec3(x * 15.f * ms, -y * 15.f * ms, 0);
+						cam.set_axis_and_matrix(cam._from, cam._at, cam._up, true);
+						// cam.rot_x(y * 15.f * ms);
+						// cam.rot_y(x * 15.f * ms);
                     }
 
                     if (event.type == SDL_QUIT) {
