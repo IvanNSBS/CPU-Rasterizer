@@ -18,7 +18,6 @@
 
 #ifdef _WIN32 || WIN32
 	#include "SDL2/SDL.h"
-	#undef main
 #elif defined(__unix__)
 	#include <SDL2/SDL.h>
 #endif
@@ -131,56 +130,11 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 			}
 		}
 	}
-
-	vec3 col, point;
-
-	// float invWidth = 1 / float(WIDTH), invHeight = 1 / float(HEIGHT); 
-	// float aspectratio = WIDTH / float(HEIGHT); 
-	// //Angulo de abertura da camera
-	// float angle = tan((cam.fov * 0.5f) * (M_PI / 180.0f)) * cam._near ; //Multiplica pelo near (zoom)
-	// float half_width = angle * aspectratio;
-	// float half_height = angle;
-
-	// for (auto obj : objs){
-	// 	for(int y = 0; y < HEIGHT; y++){
-	// 		for(int x = 0; x < WIDTH; x++){
-	// 			float bt = 1000.f;
-	// 			float bt_old = 1000.f;
-	// 			vec3 out_col;
-	// 			for (int idx = 0; idx < obj.mesh.tris.size(); idx++)
-	// 			{
-	// 				//Converte o ponto x do canvas para raster space
-	// 				//Multiplica pelo aspectratio, pois o canvas pode nao ser quadrado e gerar distorcao
-	// 				float Px = (2.0 * ( ( x ) * invWidth) - 1.0) * half_width; 
-	// 				float Py = (1.0 - 2.0 * ( ( y ) * invHeight)) * half_height; 
-
-	// 				vec3 dir = vec3(Px, Py, -1);
-	// 				cam.camToWorld.multDirMatrix(dir, dir);
-	// 				dir.make_unit_vector();
-	// 				//dir.Normalize();
-
-	// 				if( intersects_triangle(obj.mesh.tris[idx], cam._from, dir, col, point, bt) ){
-	// 					//printf("intersected!\n");
-	// 					if( bt < bt_old){
-	// 						bt_old = bt;
-	// 						out_col = col;
-	// 					}
-	// 				}
-	// 			}
-
-	// 			if( bt_old < 1000.0f){
-	// 				SDL_SetRenderDrawColor(renderer, out_col.x(), out_col.y(), out_col.z(), SDL_ALPHA_OPAQUE);
-	// 				SDL_RenderDrawPoint(renderer, x, y);
-	// 			}
-	// 		}
-	// 	}
-	// }	
-
 }
 
 
 
-int main()
+int main(int argc, char* argv[])
 {
     if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
 
@@ -256,8 +210,8 @@ int main()
 				// Display contents in a scrolling region
 				ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
 				ImGui::BeginChild("Scrolling");
-				for (int n = 0; n < 1; n++)
-					ImGui::Text("FPS: %d", (int)ms);
+				ImGui::Text("FPS: %d", (int)ms);
+				ImGui::Text("Cam Rotation: (%f, %f, %f)", cam.rotation.x(), cam.rotation.y(), cam.rotation.z());
 				ImGui::EndChild();
 				ImGui::End();
 
@@ -283,9 +237,9 @@ int main()
 					float horizontal_speed = 0.10f;
 					if( event.type == SDL_KEYDOWN){
 						if( event.key.keysym.sym == SDLK_a )
-							cam.move( vec3(horizontal_speed, 0.0f, 0.0f) );
-						if( event.key.keysym.sym == SDLK_d )
 							cam.move( vec3(-horizontal_speed, 0.0f, 0.0f) );
+						if( event.key.keysym.sym == SDLK_d )
+							cam.move( vec3(horizontal_speed, 0.0f, 0.0f) );
 						if( event.key.keysym.sym == SDLK_w )
 							cam.move( vec3(0.0f, 0.0f, -vertical_speed) );
 						if( event.key.keysym.sym == SDLK_s )
@@ -295,6 +249,17 @@ int main()
 							cam.move( vec3(0.00f, -up_speed, 0.0f) );
 						if( event.key.keysym.sym == SDLK_e )
 							cam.move( vec3(0.0f, up_speed, 0.0f) );
+
+						
+						if( event.key.keysym.sym == SDLK_z )
+							cam.rot_x(450.f * ms);
+						if( event.key.keysym.sym == SDLK_x )
+							cam.rot_y(450.f * ms);
+
+						if( event.key.keysym.sym == SDLK_c )
+							cam.rot_x(-450.f * ms);
+						if( event.key.keysym.sym == SDLK_v )
+							cam.rot_y(-450.f * ms);
 					}
 
                     if( event.type == SDL_MOUSEBUTTONDOWN )

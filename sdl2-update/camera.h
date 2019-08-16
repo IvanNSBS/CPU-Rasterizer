@@ -16,8 +16,10 @@ public:
     matrix44 worldToCamera;
 
 	vec3 _from, _at, _up;
-
     vec3 axisX, axisY, axisZ;
+
+    vec3 rotation = vec3(0,0,0);
+
 public:
     camera();
     camera(const vec3 &from, const vec3 &at, const vec3 &up,
@@ -114,6 +116,7 @@ public:
         result.multDirMatrix(axisY, axisY);
         result.multDirMatrix(axisZ, axisZ);
 
+        rotation[0] += deg;
 		set_axis_and_matrix( _from, _at, _up);
     }
 
@@ -136,6 +139,9 @@ public:
         result.multDirMatrix(axisY, axisY);
         result.multDirMatrix(axisZ, axisZ);
 		set_axis_and_matrix( _from, _at, _up);
+        
+        rotation[1] += deg;
+
     }
 
     void rot_z(float deg) {
@@ -156,6 +162,7 @@ public:
         result.multDirMatrix(axisY, axisY);
         result.multDirMatrix(axisZ, axisZ);
         set_axis_and_matrix( _from, _at, _up);
+        rotation[2] += deg;
     }
 };
 
