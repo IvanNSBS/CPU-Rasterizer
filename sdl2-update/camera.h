@@ -12,8 +12,8 @@
 	#include <SDL2/SDL.h>
 #endif
 
-const int WIDTH = 400;
-const int HEIGHT = 200;
+const int WIDTH = 800;
+const int HEIGHT = 600;
 static const int INSIDE = 0; // 0000
 static const int LEFT = 1;   // 0001
 static const int RIGHT = 2;  // 0010
@@ -48,6 +48,7 @@ public:
                 right = angle * aspectratio;    
                 bottom = -top; 
                 left = -right;
+                printf("l = %f, r = %f, t = %f, b = %f\n", left, right, top, bottom);
                 set_axis_and_matrix(from, at, up, true);
            }
 
@@ -98,9 +99,10 @@ public:
         pScreen[0] = pCamera.x() * _near / (-pCamera.z()); 
         pScreen[1] = pCamera.y() * _near / (-pCamera.z()); 
     
-        vec2 pNDC; 
+        vec2 pNDC;
         pNDC[0] = (pScreen.x() + right) / (2 * right); 
         pNDC[1] = (pScreen.y() + top) / (2 * top); 
+
         pRaster[0] = (pNDC.x() * imgWidth); 
         pRaster[1] = ((1 - pNDC.y()) * imgHeight); 
     
@@ -127,44 +129,47 @@ public:
 		set_axis_and_matrix( _from, _at, _up, false);
 	}
 
-    bool clip_line( vec2 &p0, vec2 &p1)
+    bool clip_line( vec2 &p1, vec2 &p2, vec3 *outcol)
     {
-        int t = 0, b = HEIGHT;
-        int l = 0, r = WIDTH;
-        int codep0 = 0000, codep1 = 0000;
+        int ymin = 0, ymax = HEIGHT;
+        int xmin = 0, xmax = WIDTH;
+        int codep1 = 0000, codep2 = 0000;
         
-        auto get_outcode = [&t, &l, &b, &r]( int &code, const vec2 &p){
+        auto get_outcode = [&]( int &code, const vec2 &p){
             code = INSIDE;          // initialised as being inside of [[clip window]]
 
-            if (p.x() < 0)           // to the left of clip window
+            if (p.x() < xmin)           // to the left of clip window
                 code |= LEFT;
-            else if (p.x() > WIDTH)      // to the right of clip window
+            if (p.x() > xmax)      // to the right of clip window
                 code |= RIGHT;
-            if (p.y() < 0)           // below the clip window
+            if (p.y() < ymin)           // below the clip window
                 code |= BOTTOM;
-            else if (p.y() > HEIGHT)      // above the clip window
+            if (p.y() > ymax)      // above the clip window
                 code |= TOP;
         };
 
-        get_outcode(codep0, p0);
+
         get_outcode(codep1, p1);
+        get_outcode(codep2, p2);
 
         bool accept = false;
-        unsigned int changed = 0;
         while(true){
-            if( !(codep0 | codep1) ){
-                accept = true;
-                return changed > 0; // trivialmente aceito
+            if( codep1 == 0 && codep2 == 0 ){
+                accept = true; // trivialmente aceito
+                break;
             }
-            else if(codep0 & codep1) // trivialmente recusado
-                return false;
+            else if(codep1 & codep2) // trivialmente recusado
+                break;
             else{
                 // failed both tests, so calculate the line segment to clip
                 // from an outside point to an intersection with clip edge
                 float x, y;
-                changed++;
                 // At least one endpoint is outside the clip rectangle; pick it.
-                unsigned char codeOut = codep0 ? codep0 : codep1;
+                int codeOut;
+                if( codep1 != 0)
+                    codeOut = codep1;
+                else
+                    codeOut = codep2;
 
                 // Now find the intersection point;
                 // use formulas:
@@ -174,29 +179,33 @@ public:
                 // No need to worry about divide-by-zero because, in each case, the
                 // outcode bit being tested guarantees the denominator is non-zero
                 if (codeOut & TOP) {           // point is above the clip window
-                    x = p0[0] + (p1[0] - p0[0]) * (HEIGHT - p0[1]) / (p1[1] - p0[1]);
-                    y = HEIGHT;
-                } else if (codeOut & BOTTOM) { // point is below the clip window
-                    x = p0[0] + (p1[0] - p0[0]) * (0 - p0[1]) / (p1[1] - p0[1]);
-                    y = 0;
-                } else if (codeOut & RIGHT) {  // point is to the right of clip window
-                    y = p0[1] + (p1[1] - p0[1]) * (WIDTH - p0[0]) / (p1[0] - p0[0]);
-                    x = WIDTH;
-                } else if (codeOut & LEFT) {   // point is to the left of clip window
-                    y = p0[1] + (p1[1] - p0[1]) * (0 - p0[0]) / (p1[0] - p0[0]);
-                    x = 0;
+                    x = p1.x() + (p2.x() - p1.x()) * ( ymax - p1.y()) / (p2.y() - p1.y());
+                    y = ymax;
+                } 
+                else if (codeOut & BOTTOM) { // point is below the clip window
+                    x = p1.x() + (p2.x() - p1.x()) * ( ymin - p1.y()) / (p2.y() - p1.y());
+                    y = ymin;
+                } 
+                else if (codeOut & RIGHT) {  // point is to the right of clip window
+                    y = p1.y() + (p2.y() - p1.y()) * ( xmax - p1.x()) / (p2.x() - p1.x());
+                    x = xmax;
+                } 
+                else if (codeOut & LEFT) {   // point is to the left of clip window
+                    y = p1.y() + (p2.y() - p1.y()) * ( xmin - p1.x()) / (p2.x() - p1.x());
+                    x = xmin;
                 }
 
                 // Now we move outside point to intersection point to clip
                 // and get ready for next pass.
-                if (codeOut == codep0) {
-                    p0[0] = x;
-                    p0[1] = y;
-                    get_outcode(codep0, p0);
-                } else {
+                if (codeOut == codep1) {
                     p1[0] = x;
                     p1[1] = y;
                     get_outcode(codep1, p1);
+                } 
+                else {
+                    p2[0] = x;
+                    p2[1] = y;
+                    get_outcode(codep2, p2);
                 }
             }
         }
@@ -205,10 +214,11 @@ public:
 
     void draw_lines( const vec2 &p0, const vec2 &p1, SDL_Renderer *renderer, const vec3 &col)
     {
-
         // calculate dx , dy
         int dx = p1.x() - p0.x();
         int dy = p1.y() - p0.y();
+        if( dx == 0 && dy == 0)
+            return;
 
         // Depending upon absolute value of dx & dy
         // choose number of steps to put pixel as
@@ -222,6 +232,7 @@ public:
         // Put pixel for each step
         float X = p0.x();
         float Y = p0.y();
+        
         for (int i = 0; i <= steps; i++)
         {
             SDL_RenderDrawPoint(renderer, X, Y);
@@ -309,25 +320,33 @@ public:
 
 
                     if(v1 && v2){
-                        bool clip = clip_line(praster1, praster2);
+                        bool clip = false;
+                        vec2 raster1 = praster1;
+                        vec2 raster2 = praster2;
+
+                        clip = clip_line(raster1, raster2, 0);
                         if(clip)
-                            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-                        draw_lines(praster1, praster2, renderer, col);
-                        // SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
+                            draw_lines(raster1, raster2, renderer, col);
+                        
                     }
                     if(v1 && v3){
-                        bool clip = clip_line(praster1, praster3);
+                        bool clip = false;
+                        vec2 raster1 = praster1;
+                        vec2 raster3 = praster3;
+
+                        clip = clip_line(raster1, raster3, 0);
                         if(clip)
-                            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-                        // SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
-                        draw_lines(praster1, praster3, renderer, col);
+                            draw_lines(raster1, raster3, renderer, col);
                     }
                     if(v2 && v3){
-                        bool clip = clip_line(praster2, praster3);
+                        bool clip = false;
+                        vec2 raster2 = praster2;
+                        vec2 raster3 = praster3;
+
+                        clip = clip_line(raster2, raster3, 0);
                         if(clip)
-                            SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-                        // SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
-                        draw_lines(praster2, praster3, renderer, col);
+                            draw_lines(raster2, raster3, renderer, col);
+
                     }
                 }
             }
