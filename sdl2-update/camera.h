@@ -37,7 +37,7 @@ public:
                 set_axis_and_matrix(from, at, up, true);
            }
 
-    void set_axis_and_matrix(const vec3& from, const vec3& at, const vec3& up, bool update_axis = false)
+    void set_axis_and_matrix(const vec3 &from, const vec3 &at, const vec3 &up, bool update_axis = false)
     {
         if( update_axis ){
             axisZ = unit_vector( from-at );
@@ -85,8 +85,9 @@ public:
 			return false;
 
         vec3 pCamera; 
-        worldToCamera.mult_point_matrix(pWorld, pCamera); 
         vec2 pScreen; 
+        worldToCamera.mult_point_matrix(pWorld, pCamera); 
+        
         pScreen[0] = pCamera.x() * _near / (-pCamera.z()); 
         pScreen[1] = pCamera.y() * _near / (-pCamera.z()); 
     
@@ -106,9 +107,9 @@ public:
     void rotate( float dx, float dy)
     {
         vec3 rot(dx, dy, 0);
+        rotation += vec3(dx, dy, 0);
         camToWorld.mult_vec_matrix(rot, rot);
         _at += rot;
-        rotation += vec3(dx, dy, 0);
         set_axis_and_matrix(_from, _at, _up, true);
     }
 

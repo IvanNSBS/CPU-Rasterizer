@@ -60,6 +60,67 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
 	}// This means that there is a line intersection but not a ray intersection.
 }
 
+void fill_triangle( const Triangle &tr, SDL_Renderer *renderer, const vec3 &col)
+{
+
+}
+
+void draw_lines( const vec2 &p0, const vec2 &p1, SDL_Renderer *renderer, const vec3 &col)
+{
+
+	// // calculate dx , dy
+	// int dx = p1.x() - p0.x();
+	// int dy = p1.y() - p0.y();
+
+	// // Depending upon absolute value of dx & dy
+	// // choose number of steps to put pixel as
+	// // steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy)
+	// int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+	// // calculate increment in x & y for each steps
+	// float Xinc = dx / (float) steps;
+	// float Yinc = dy / (float) steps;
+
+	// // Put pixel for each step
+	// float X = p0.x();
+	// float Y = p0.y();
+	// for (int i = 0; i <= steps; i++)
+	// {
+	// 	SDL_RenderDrawPoint(renderer, X, Y);
+	// 	X += Xinc;
+	// 	Y += Yinc;
+	// }
+
+	int dx = p1.x() - p0.x();
+	int dy = p1.y() - p0.y();
+	// points are too close, draw point and return
+	if( dx == 0 && dy == 0){
+		SDL_RenderDrawPoint(renderer, p1.x(), p1.y());
+		return;
+	}
+
+	vec2 origin = p0;
+	vec2 line = unit_vector(p1 - p0);
+	float end, start, step;
+	if( dx != 0 ){
+		end = p1.x() > p0.x() ? p1.x() : p0.x();
+		start = p1.x() > p0.x() ? p0.x() : p1.x();
+		step = abs(line.x());
+	}
+	else{
+		end = p1.y() > p0.y() ? p1.y() : p0.y();
+		start = p1.y() > p0.y() ? p0.y() : p1.y();
+		step = abs(line.y());	
+	}
+
+	// printf("start = %f | end = %f | step = %f\n", start, end, step);
+
+	for(float i = start; i <= end; i+=step){
+		SDL_RenderDrawPoint(renderer, origin.x(), origin.y());
+		origin += line;
+	}
+}
+
 void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Renderer* renderer) {
 
 	// for (auto obj : objs){
@@ -107,12 +168,19 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 				v2 = cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[1].pos, praster2);
 				v3 = cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[2].pos, praster3);
 
-				if (v1 && v2)
-					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
+				if(v1 && v2)
+					draw_lines(praster1, praster2, renderer, col);
 				if(v1 && v3)
-					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
+					draw_lines(praster1, praster3, renderer, col);
 				if(v2 && v3)
-					SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
+					draw_lines(praster2, praster3, renderer, col);
+
+				// if(v1 && v2)
+				// 	SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
+				// if(v1 && v3)
+				// 	SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
+				// if(v2 && v3)
+				// 	SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
 			}
 		}
 	}
@@ -175,7 +243,7 @@ int main(int argc, char* argv[])
 				{
 					if (ImGui::BeginMenu("File"))
 					{
-						if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+						if (ImGui::MenuItem("Open..", "Ctrl+O")) { objects.push_back( Obj("./monkey_smooth.obj") ); objects[objects.size()-1].translate( vec3(10, 0, 0) ); }
 						if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
 						if (ImGui::MenuItem("Close", "Ctrl+W"))  { my_tool_active = false; }
 						ImGui::EndMenu();
@@ -192,8 +260,8 @@ int main(int argc, char* argv[])
 
 				// Display contents in a scrolling region
 				ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
-				ImGui::BeginChild("Scrolling");
 				ImGui::Text("FPS: %d", (int)ms);
+				ImGui::BeginChild("Scrolling");
 				ImGui::Text("Cam Rotation: (%f, %f, %f)", cam.rotation.x(), cam.rotation.y(), cam.rotation.z());
 				ImGui::Text("Cam Position: (%f, %f, %f)", cam._from.x(), cam._from.y(), cam._from.z());
 				ImGui::Text("Color: (%f, %f, %f)", my_color[0]*255.0, my_color[1]*255.0, my_color[2]*255.0, my_color[3]*255.0);
@@ -260,14 +328,15 @@ int main(int argc, char* argv[])
 
 							int x, y;
 							SDL_GetMouseState(&x, &y);
-							float invWidth = 1 / float(WIDTH), invHeight = 1 / float(HEIGHT); 
-							float aspectratio = WIDTH / float(HEIGHT); 
+							printf("x = %d| y = %d\n", x, y);
+							float invWidth = 1.0f/float(WIDTH), invHeight = 1.0f/float(HEIGHT); 
+							float aspectratio = WIDTH/float(HEIGHT); 
 							//Angulo de abertura da camera
 							float angle = tan((cam.fov * 0.5f) * (M_PI / 180.0f)) * cam._near ; //Multiplica pelo near (zoom)
 							float half_width = angle * aspectratio;
 							float half_height = angle;
-							float Px = (2.0 * ( ( x ) * invWidth) - 1.0) * half_width; 
-							float Py = (1.0 - 2.0 * ( ( y ) * invHeight)) * half_height; 
+							float Px = (2.0 * ( ( (float)x ) * invWidth) - 1.0) * half_width; 
+							float Py = (1.0 - 2.0 * ( ( (float)y ) * invHeight)) * half_height; 
 
 							vec3 dir = vec3(Px, Py, -1);
 							cam.camToWorld.mult_vec_matrix(dir, dir);
@@ -277,6 +346,7 @@ int main(int argc, char* argv[])
 
 							bool finish = false;
 							for( auto &object : objects){
+								printf("iterating...\n");
 								for( auto &tr : object.mesh.tris){
 									if( intersects_triangle(tr, cam._from, dir, col, point, t) ){
 										printf("pressed left mouse\n");
