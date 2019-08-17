@@ -6,7 +6,7 @@
 #include <string>
 #include <cstring>
 #include "vec3.h"
-#include "vec2f.h"
+#include "vec2.h"
 #include "matrix44.h"
 
 #define min_x 0
@@ -18,23 +18,28 @@
 
 #define M_PI 3.141592653589793
 
+struct Vertex{
+	vec3 pos;
+	vec3 normal;
+	vec2 uv;
+};
+
 
 struct Triangle {
-	vec3 vert[3];
-	vec2f uv[3];
-	vec3 normal[3];
 
-	Triangle( const std::vector<vec3> v, const std::vector<vec2f> t, const std::vector<vec3> n)
+	Vertex vertex[3];
+
+	Triangle( const std::vector<vec3> v, const std::vector<vec2> t, const std::vector<vec3> n)
 	{
-		vert[0] = v[0];
-		vert[1] = v[1];
-		vert[2] = v[2];
-		uv[0] = t[0];
-		uv[1] = t[1];
-		uv[2] = t[2];
-		normal[0] = n[0];
-		normal[1] = n[1];
-		normal[2] = n[2];
+		vertex[0].pos = v[0];
+		vertex[1].pos = v[1];
+		vertex[2].pos = v[2];
+		vertex[0].uv = t[0];
+		vertex[1].uv = t[1];
+		vertex[2].uv = t[2];
+		vertex[0].normal = n[0];
+		vertex[1].normal = n[1];
+		vertex[2].normal = n[2];
 	}
 
 	~Triangle(){}
@@ -63,7 +68,7 @@ public:
 
 		std::vector< unsigned int > vertexIndices, uvIndices, normalIndices;
 		std::vector< vec3 > temp_vertices;
-		std::vector< vec2f > temp_uvs;
+		std::vector< vec2 > temp_uvs;
 		std::vector< vec3 > temp_normals;
 
 		std::ifstream f(path);
@@ -90,7 +95,7 @@ public:
 			{
 				if (line[1] == 't') 
 				{
-					vec2f uv;
+					vec2 uv;
 					s >> junk >> junk >> uv[0] >> uv[1];
 					temp_uvs.push_back(uv);
 				}
@@ -193,7 +198,7 @@ public:
 			vertices.push_back(temp_vertices[v2 - 1]);
 			vertices.push_back(temp_vertices[v3 - 1]);
 
-			std::vector<vec2f> uvs;
+			std::vector<vec2> uvs;
 			if( uvIndices.size() > 0 ){
 				uvs.push_back(temp_uvs[uv1 - 1]);
 				uvs.push_back(temp_uvs[uv2 - 1]);
@@ -257,13 +262,9 @@ public:
 					0, 0, 0, 1);
 
 		for ( Triangle &tri : mesh.tris) {
-			tr.multVecMatrix(tri.vert[0], tri.vert[0]);
-			tr.multVecMatrix(tri.vert[1], tri.vert[1]);
-			tr.multVecMatrix(tri.vert[2], tri.vert[2]);
-
-			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
-			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
-			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
+			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
 		}
 
 		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
@@ -279,12 +280,9 @@ public:
 
 
 		for ( Triangle &tri : mesh.tris) {
-			tr.multVecMatrix(tri.vert[0], tri.vert[0]);
-			tr.multVecMatrix(tri.vert[1], tri.vert[1]);
-			tr.multVecMatrix(tri.vert[2], tri.vert[2]);
-			tr.multVecMatrix(tri.normal[0], tri.normal[0]);
-			tr.multVecMatrix(tri.normal[1], tri.normal[1]);
-			tr.multVecMatrix(tri.normal[2], tri.normal[2]);
+			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
 		}
 
 		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
@@ -308,13 +306,13 @@ public:
 		matrix44 result = (tr*rot)*itr;
 
 		for ( Triangle &tri : mesh.tris) {
-			result.multVecMatrix(tri.vert[0], tri.vert[0]);
-			result.multVecMatrix(tri.vert[1], tri.vert[1]);
-			result.multVecMatrix(tri.vert[2], tri.vert[2]);
+			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
 
-			result.multDirMatrix(tri.normal[0], tri.normal[0]);
-			result.multDirMatrix(tri.normal[1], tri.normal[1]);
-			result.multDirMatrix(tri.normal[2], tri.normal[2]);
+			tr.multDirMatrix(tri.vertex[0].normal, tri.vertex[0].normal);
+			tr.multDirMatrix(tri.vertex[1].normal, tri.vertex[1].normal);
+			tr.multDirMatrix(tri.vertex[2].normal, tri.vertex[2].normal);
 		}
 		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
 	}
@@ -336,13 +334,13 @@ public:
 		matrix44 result = (tr*rot)*itr;
 
 		for ( Triangle &tri : mesh.tris) {
-			result.multVecMatrix(tri.vert[0], tri.vert[0]);
-			result.multVecMatrix(tri.vert[1], tri.vert[1]);
-			result.multVecMatrix(tri.vert[2], tri.vert[2]);
-			
-			result.multDirMatrix(tri.normal[0], tri.normal[0]);
-			result.multDirMatrix(tri.normal[1], tri.normal[1]);
-			result.multDirMatrix(tri.normal[2], tri.normal[2]);
+			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
+
+			tr.multDirMatrix(tri.vertex[0].normal, tri.vertex[0].normal);
+			tr.multDirMatrix(tri.vertex[1].normal, tri.vertex[1].normal);
+			tr.multDirMatrix(tri.vertex[2].normal, tri.vertex[2].normal);
 		}
 		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
 
@@ -364,13 +362,13 @@ public:
 		matrix44 result = (tr*rot)*itr;
 
 		for ( Triangle &tri : mesh.tris) {
-			result.multVecMatrix(tri.vert[0], tri.vert[0]);
-			result.multVecMatrix(tri.vert[1], tri.vert[1]);
-			result.multVecMatrix(tri.vert[2], tri.vert[2]);
+			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
 
-			result.multDirMatrix(tri.normal[0], tri.normal[0]);
-			result.multDirMatrix(tri.normal[1], tri.normal[1]);
-			result.multDirMatrix(tri.normal[2], tri.normal[2]);
+			tr.multDirMatrix(tri.vertex[0].normal, tri.vertex[0].normal);
+			tr.multDirMatrix(tri.vertex[1].normal, tri.vertex[1].normal);
+			tr.multDirMatrix(tri.vertex[2].normal, tri.vertex[2].normal);
 		}
 		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
 

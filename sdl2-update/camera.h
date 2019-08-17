@@ -2,7 +2,7 @@
 #define CAMERAH
 
 #include "vec3.h"
-#include "vec2f.h"
+#include "vec2.h"
 #include "matrix44.h"
 
 
@@ -76,7 +76,7 @@ public:
 		set_axis_and_matrix( _from, _at, _up, false);
 	}
 
-    bool compute_pixel_coordinates(const vec3 &pWorld, vec2f &pRaster) 
+    bool compute_pixel_coordinates(const vec3 &pWorld, vec2 &pRaster) 
     { 
 		vec3 ray = pWorld - _from;
 		ray.make_unit_vector();
@@ -86,11 +86,11 @@ public:
 
         vec3 pCamera; 
         worldToCamera.multVecMatrix(pWorld, pCamera); 
-        vec2f pScreen; 
+        vec2 pScreen; 
         pScreen[0] = pCamera.x() * _near / (-pCamera.z()); 
         pScreen[1] = pCamera.y() * _near / (-pCamera.z()); 
     
-        vec2f pNDC; 
+        vec2 pNDC; 
         pNDC[0] = (pScreen.x() + right) / (2 * right); 
         pNDC[1] = (pScreen.y() + top) / (2 * top); 
         pRaster[0] = (pNDC.x() * imgWidth); 
@@ -101,6 +101,15 @@ public:
             visible = false;*/ 
     
         return visible; 
+    }
+
+    void rotate( float dx, float dy)
+    {
+        vec3 rot(dx, dy, 0);
+        camToWorld.multDirMatrix(rot, rot);
+        _at += rot;
+        rotation += vec3(dx, dy, 0);
+        set_axis_and_matrix(_from, _at, _up, true);
     }
 
     void rot_x(float deg) {

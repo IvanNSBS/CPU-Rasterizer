@@ -1,23 +1,15 @@
 
-#include <chrono>
-
-#include <math.h>
 #include <string>
-#include <iostream>
-#include <vector>
 #include <math.h>
 #include "camera.h"
 #include <chrono>
-#include <algorithm>
 #include "object.h"
-#include <cstdio>
-#include <cmath>
 
 #include "ImGUI/imgui_sdl.h"
 #include "ImGUI/imgui.h"
 
 #ifdef _WIN32 || WIN32
-	#include "SDL2/SDL.h"
+	#include <SDL.h>
 #elif defined(__unix__)
 	#include <SDL2/SDL.h>
 #endif
@@ -26,17 +18,15 @@
 #define MAX 1
 #define PI 3.14159265
 
-
 static const int WIDTH = 800;
 static const int HEIGHT = 600;
-
 
 bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_col, vec3 &out_point, float &t)
 {
     const float EPSILON = 0.0000001;
-    vec3 vertex0 = tr.vert[0];
-    vec3 vertex1 = tr.vert[1];  
-    vec3 vertex2 = tr.vert[2];
+    vec3 vertex0 = tr.vertex[0].pos;
+    vec3 vertex1 = tr.vertex[1].pos;  
+    vec3 vertex2 = tr.vertex[2].pos;
     vec3 edge1, edge2, h, s, q;
     float a,f,u,v;
     edge1 = vertex1 - vertex0;
@@ -60,7 +50,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
     if (t > EPSILON) // ray intersection
     {
 		float w = 1.0 - u - v;
-		vec3 normal = w*tr.normal[0] + u*tr.normal[1] + v*tr.normal[2]; 
+		vec3 normal = w*tr.vertex[0].normal + u*tr.vertex[1].normal + v*tr.vertex[1].normal; 
 		out_col = vec3(0, 255, 0) * (dot(normal, vec3(0,0, -1.0f)));
         out_point = ray_org + ray_dir * t;
         return true;
@@ -90,38 +80,33 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 	// 		});
 	// }
 
-
 	vec3 light(0.0f, 0.0f, -1.0f);
 	light.make_unit_vector();
 
 	for (auto obj : objs){
 		for (int i = 0; i < obj.mesh.tris.size(); i++)
 		{
-			vec3 normal = obj.mesh.tris[i].normal[0];
+			vec3 n1 = obj.mesh.tris[i].vertex[0].normal;
+			vec3 n2 = obj.mesh.tris[i].vertex[1].normal;
+			vec3 n3 = obj.mesh.tris[i].vertex[2].normal;
+			vec3 normal = (1.f/3.f) * n1 + (1.f/3.f)*n2 + (1.f/3.f)*n3;
 
-			vec3 ray = obj.mesh.tris[i].vert[0] - cam._from;
+			vec3 ray = obj.mesh.tris[i].vertex[0].pos - cam._from;
 			if ( dot(normal, ray ) < 0.0f ) {
 
 				float dp = dot(normal, light);
-				vec2f praster1;
-				vec2f praster2;
-				vec2f praster3;
+				vec2 praster1;
+				vec2 praster2;
+				vec2 praster3;
 
-				if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[0], praster1) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[1], praster2) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vert[2], praster3)
+				if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[0].pos, praster1) &&
+					cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[1].pos, praster2) &&
+					cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[2].pos, praster3)
 				){
 					vec3 col(255, 255, 255);
-					// col *= dp;
 					vec3 org(0,0,0);
-					// if( intersects_triangle(obj.mesh.tris[i], cam._from, cam.axisZ, col) ){
-					// 	col = vec3(0,255,0);
-					// }
 
 					SDL_SetRenderDrawColor(renderer, obj.col.x(), obj.col.y(), obj.col.z(), SDL_ALPHA_OPAQUE);
-					// SDL_RenderDrawPoint(renderer, praster1[0], praster1[1]);
-					// SDL_RenderDrawPoint(renderer, praster3[0], praster3[1]);
-					// SDL_RenderDrawPoint(renderer, praster2[0], praster2[1]);
 
 					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
 					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
@@ -147,14 +132,11 @@ int main(int argc, char* argv[])
 			SDL_SetRelativeMouseMode(SDL_FALSE);
             
 			std::vector<Obj> objects;
-            // objects.push_back( Obj("./cornelbox.obj") );
             objects.push_back( Obj("./monkey_smooth.obj") );
-			// objects[0].rot_x(34.6);
-			// objects[0].rot_y(-50.f);
-			// objects[0].rot_z(-4.56f);
+			objects[0].rot_x(34.6);
+			objects[0].rot_y(-50.f);
+			objects[0].rot_z(-4.56f);
 
-			// monkey_mesh.scale( vec3(0.1, 0.1, 0.1) );
-			// objects[0].translate(vec3(2.0f, 0.0f, 0.0f));
 			ImGui::CreateContext();
 			ImGuiSDL::Initialize(renderer, WIDTH, HEIGHT);
 
@@ -274,6 +256,7 @@ int main(int argc, char* argv[])
 							SDL_SetRelativeMouseMode(SDL_TRUE);
                         }
 						if( event.button.button == SDL_BUTTON_LEFT){
+
 							int x, y;
 							SDL_GetMouseState(&x, &y);
 							float invWidth = 1 / float(WIDTH), invHeight = 1 / float(HEIGHT); 
@@ -319,24 +302,12 @@ int main(int argc, char* argv[])
                     if( event.type == SDL_MOUSEMOTION && mouse_down ){
                         float x = event.motion.xrel;
                         float y = event.motion.yrel;
-                       	//rot_x(-y, monkey_mesh, monkey_mesh.bbox_center);
-                        //rot_y(-x, monkey_mesh, monkey_mesh.bbox_center);
-						
-						//WORKING!
-						vec3 rot(x * 15.f * ms, -y * 15.f * ms, 0);
-						cam.camToWorld.multDirMatrix(rot, rot);
-						cam._at += rot;
-						cam.rotation += vec3(x * 15.f * ms, -y * 15.f * ms, 0);;
-						cam.set_axis_and_matrix(cam._from, cam._at, cam._up, true);
-						// cam.rot_x(y * 50.f * ms);
-						// cam.rot_y(x * 50.f * ms);
+
+						cam.rotate(x * 15.f * ms, -y * 15.f * ms);
                     }
 
-                    if (event.type == SDL_QUIT) {
+                    if (event.type == SDL_QUIT)
                         done = SDL_TRUE;
-                    }
-
-				
 					
                 }
                 ms = 1.0/ms;
