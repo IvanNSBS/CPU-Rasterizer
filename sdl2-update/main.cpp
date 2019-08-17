@@ -212,8 +212,8 @@ int main(int argc, char* argv[])
 				std::clock_t now = std::clock();
                 ms = (double)(now - then);
 				ms /= CLOCKS_PER_SEC;
-				//monkey_mesh.rot_x(1.f * ms);
-				//monkey_mesh.rot_y(1.f * ms);
+				objects[0].rot_x(4.f * ms);
+				objects[0].rot_y(-4.f * ms);
 
                 while (SDL_PollEvent(&event)) {
 
@@ -270,7 +270,7 @@ int main(int argc, char* argv[])
 							float Py = (1.0 - 2.0 * ( ( y ) * invHeight)) * half_height; 
 
 							vec3 dir = vec3(Px, Py, -1);
-							cam.camToWorld.multDirMatrix(dir, dir);
+							cam.camToWorld.mult_vec_matrix(dir, dir);
 							dir.make_unit_vector();
 							vec3 col, point;
 							float t;

@@ -262,12 +262,12 @@ public:
 					0, 0, 0, 1);
 
 		for ( Triangle &tri : mesh.tris) {
-			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
-			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
-			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
+			tr.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			tr.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			tr.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
 		}
 
-		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+		tr.mult_point_matrix(mesh.bbox_center, mesh.bbox_center);
 
 	}
 
@@ -280,12 +280,12 @@ public:
 
 
 		for ( Triangle &tri : mesh.tris) {
-			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
-			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
-			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
+			tr.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			tr.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			tr.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
 		}
 
-		tr.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+		tr.mult_point_matrix(mesh.bbox_center, mesh.bbox_center);
 
 	}
 
@@ -306,15 +306,15 @@ public:
 		matrix44 result = (tr*rot)*itr;
 
 		for ( Triangle &tri : mesh.tris) {
-			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
-			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
-			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
+			result.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			result.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			result.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
 
-			tr.multDirMatrix(tri.vertex[0].normal, tri.vertex[0].normal);
-			tr.multDirMatrix(tri.vertex[1].normal, tri.vertex[1].normal);
-			tr.multDirMatrix(tri.vertex[2].normal, tri.vertex[2].normal);
+			result.mult_vec_matrix(tri.vertex[0].normal, tri.vertex[0].normal);
+			result.mult_vec_matrix(tri.vertex[1].normal, tri.vertex[1].normal);
+			result.mult_vec_matrix(tri.vertex[2].normal, tri.vertex[2].normal);
 		}
-		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+		result.mult_point_matrix(mesh.bbox_center, mesh.bbox_center);
 	}
 
 
@@ -334,15 +334,15 @@ public:
 		matrix44 result = (tr*rot)*itr;
 
 		for ( Triangle &tri : mesh.tris) {
-			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
-			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
-			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
+			result.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			result.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			result.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
 
-			tr.multDirMatrix(tri.vertex[0].normal, tri.vertex[0].normal);
-			tr.multDirMatrix(tri.vertex[1].normal, tri.vertex[1].normal);
-			tr.multDirMatrix(tri.vertex[2].normal, tri.vertex[2].normal);
+			result.mult_vec_matrix(tri.vertex[0].normal, tri.vertex[0].normal);
+			result.mult_vec_matrix(tri.vertex[1].normal, tri.vertex[1].normal);
+			result.mult_vec_matrix(tri.vertex[2].normal, tri.vertex[2].normal);
 		}
-		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+		result.mult_point_matrix(mesh.bbox_center, mesh.bbox_center);
 
 	}
 
@@ -362,15 +362,15 @@ public:
 		matrix44 result = (tr*rot)*itr;
 
 		for ( Triangle &tri : mesh.tris) {
-			tr.multVecMatrix(tri.vertex[0].pos, tri.vertex[0].pos);
-			tr.multVecMatrix(tri.vertex[1].pos, tri.vertex[1].pos);
-			tr.multVecMatrix(tri.vertex[2].pos, tri.vertex[2].pos);
+			result.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
+			result.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
+			result.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
 
-			tr.multDirMatrix(tri.vertex[0].normal, tri.vertex[0].normal);
-			tr.multDirMatrix(tri.vertex[1].normal, tri.vertex[1].normal);
-			tr.multDirMatrix(tri.vertex[2].normal, tri.vertex[2].normal);
+			result.mult_vec_matrix(tri.vertex[0].normal, tri.vertex[0].normal);
+			result.mult_vec_matrix(tri.vertex[1].normal, tri.vertex[1].normal);
+			result.mult_vec_matrix(tri.vertex[2].normal, tri.vertex[2].normal);
 		}
-		result.multVecMatrix(mesh.bbox_center, mesh.bbox_center);
+		result.mult_point_matrix(mesh.bbox_center, mesh.bbox_center);
 
 	}
 };

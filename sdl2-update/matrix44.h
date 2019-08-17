@@ -11,11 +11,9 @@
 class matrix44 
 { 
 public: 
- 
     float x[4][4] = {{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}}; 
  
     matrix44() {} 
- 
     matrix44 (float a, float b, float c, float d, 
               float e, float f, float g, float h, 
               float i, float j, float k, float l, 
@@ -27,33 +25,30 @@ public:
         x[3][0] = m; x[3][1] = n; x[3][2] = o; x[3][3] = p; 
     } 
  
-    const float* operator [] (uint8_t i) const { return x[i]; } 
-    float* operator [] (uint8_t i) { return x[i]; } 
+    inline const float* operator[](uint8_t i) const { return x[i]; } 
+    inline float* operator[](uint8_t i) { return x[i]; } 
  
-    matrix44 operator * (const matrix44& v) const { 
+    matrix44 operator *(const matrix44 &v) const{ 
         matrix44 tmp; 
         multiply (*this, v, tmp); 
         return tmp; 
     } 
 
-    static void multiply(const matrix44 &a, const matrix44& b, matrix44 &c) {  
-        for (uint8_t i = 0; i < 4; ++i) 
-        { 
-            for (uint8_t j = 0; j < 4; ++j) 
-            { 
+    static void multiply(const matrix44 &a, const matrix44& b, matrix44 &c) 
+    {  
+        for (uint8_t i = 0; i < 4; ++i) { 
+            for (uint8_t j = 0; j < 4; ++j) { 
                 c[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + 
-                    a[i][2] * b[2][j] + a[i][3] * b[3][j]; 
+                          a[i][2] * b[2][j] + a[i][3] * b[3][j]; 
             } 
         } 
     }
  
     matrix44 transposed() const { 
         matrix44 t; 
-        for (uint8_t i = 0; i < 4; ++i) { 
-            for (uint8_t j = 0; j < 4; ++j) { 
+        for (uint8_t i = 0; i < 4; ++i) 
+            for (uint8_t j = 0; j < 4; ++j) 
                 t[i][j] = x[j][i]; 
-            } 
-        } 
         return t;  
     } 
 
@@ -66,7 +61,7 @@ public:
         return *this; 
     }
 
-    void multVecMatrix(const vec3 &src, vec3 &dst) const { 
+    void mult_point_matrix(const vec3 &src, vec3 &dst) const { 
         float a, b, c, w; 
  
         a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0] + x[3][0]; 
@@ -79,7 +74,7 @@ public:
         dst[2] = c / w; 
     } 
 
-    void multDirMatrix(const vec3 &src, vec3 &dst) const { 
+    void mult_vec_matrix(const vec3 &src, vec3 &dst) const { 
         float a, b, c; 
  
         a = src[0] * x[0][0] + src[1] * x[1][0] + src[2] * x[2][0]; 
@@ -104,21 +99,18 @@ public:
             if (pivotsize < 0) 
                 pivotsize = -pivotsize; 
  
-                for (j = i + 1; j < 4; j++) { 
-                    float tmp = t[j][i]; 
- 
-                    if (tmp < 0) 
-                        tmp = -tmp; 
- 
-                        if (tmp > pivotsize) { 
-                            pivot = j; 
-                            pivotsize = tmp; 
-                        } 
+            for (j = i + 1; j < 4; j++) { 
+                float tmp = t[j][i]; 
+                if (tmp < 0) 
+                    tmp = -tmp; 
+                if (tmp > pivotsize) { 
+                    pivot = j; 
+                    pivotsize = tmp; 
                 } 
- 
-            if (pivotsize == 0) { 
-                return matrix44(); 
             } 
+ 
+            if (pivotsize == 0)
+                return matrix44(); 
  
             if (pivot != i) { 
                 for (j = 0; j < 4; j++) { 
@@ -146,26 +138,20 @@ public:
  
         for (i = 3; i >= 0; --i) { 
             float f; 
- 
-            if ((f = t[i][i]) == 0) { 
+            if ((f = t[i][i]) == 0) 
                 return matrix44(); 
-            } 
- 
             for (j = 0; j < 4; j++) { 
                 t[i][j] /= f; 
                 s[i][j] /= f; 
             } 
- 
             for (j = 0; j < i; j++) { 
                 f = t[j][i]; 
- 
                 for (k = 0; k < 4; k++) { 
                     t[j][k] -= f * t[i][k]; 
                     s[j][k] -= f * s[i][k]; 
                 } 
             } 
         } 
- 
         return s; 
     } 
  

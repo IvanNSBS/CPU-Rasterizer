@@ -70,7 +70,7 @@ public:
     }
 
 	void move(vec3 dir) {
-        camToWorld.multDirMatrix(dir, dir);
+        camToWorld.mult_vec_matrix(dir, dir);
 		_from += dir;
 		_at += dir;
 		set_axis_and_matrix( _from, _at, _up, false);
@@ -85,7 +85,7 @@ public:
 			return false;
 
         vec3 pCamera; 
-        worldToCamera.multVecMatrix(pWorld, pCamera); 
+        worldToCamera.mult_point_matrix(pWorld, pCamera); 
         vec2 pScreen; 
         pScreen[0] = pCamera.x() * _near / (-pCamera.z()); 
         pScreen[1] = pCamera.y() * _near / (-pCamera.z()); 
@@ -106,7 +106,7 @@ public:
     void rotate( float dx, float dy)
     {
         vec3 rot(dx, dy, 0);
-        camToWorld.multDirMatrix(rot, rot);
+        camToWorld.mult_vec_matrix(rot, rot);
         _at += rot;
         rotation += vec3(dx, dy, 0);
         set_axis_and_matrix(_from, _at, _up, true);
@@ -127,8 +127,8 @@ public:
                     -_from.x(), -_from.y(), -_from.z(), 1);
         matrix44 itr = tr.inverse();
         matrix44 result = (tr*rot)*itr;
-        result.multVecMatrix(_at,_at);
-        result.multDirMatrix(_up,_up);
+        result.mult_point_matrix(_at,_at);
+        result.mult_vec_matrix(_up,_up);
         _up.make_unit_vector();
 
 		set_axis_and_matrix( _from, _at, _up, true);
@@ -152,8 +152,8 @@ public:
         matrix44 itr = tr.inverse();
 
         matrix44 result = (tr*rot)*itr;
-        result.multVecMatrix(_at,_at);
-        result.multDirMatrix(_up,_up);
+        result.mult_point_matrix(_at,_at);
+        result.mult_vec_matrix(_up,_up);
         _up.make_unit_vector();
 
 		set_axis_and_matrix( _from, _at, _up, true);
@@ -174,8 +174,8 @@ public:
                      0, 0, 1, 0,
                      0, 0, 0, 1);
         matrix44 result = (tr*rot)*itr;
-        result.multVecMatrix(_at,_at);
-        result.multDirMatrix(_up,_up);
+        result.mult_point_matrix(_at,_at);
+        result.mult_vec_matrix(_up,_up);
         set_axis_and_matrix( _from, _at, _up, true);
         rotation[2] += deg;
     }
