@@ -3,7 +3,6 @@
 #include <math.h>
 #include "camera.h"
 #include <chrono>
-#include "object.h"
 
 #include "ImGUI/imgui_sdl.h"
 #include "ImGUI/imgui.h"
@@ -12,13 +11,6 @@
 #define MAX 1
 #define PI 3.14159265
 
-static const int WIDTH = 400;
-static const int HEIGHT = 200;
-static const int INSIDE = 0; // 0000
-static const int LEFT = 1;   // 0001
-static const int RIGHT = 2;  // 0010
-static const int BOTTOM = 4; // 0100
-static const int TOP = 8;    // 1000
 
 bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_col, vec3 &out_point, float &t)
 {
@@ -101,11 +93,34 @@ int main(int argc, char* argv[])
 
 
 				ImGui::NewFrame();
+			
+				//ImGui::ShowDemoWindow();
+
+				// Create a window called "My First Tool", with a menu bar.
+				ImGui::Begin("My First Tool", &my_tool_active, ImGuiWindowFlags_MenuBar);
+				if (ImGui::BeginMenuBar())
+				{
+					if (ImGui::BeginMenu("File"))
+					{
+						if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+						if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
+						if (ImGui::MenuItem("Close", "Ctrl+W"))  { my_tool_active = false; }
+						ImGui::EndMenu();
+					}
+					ImGui::EndMenuBar();
+				}
+
 				// Edit a color (stored as ~4 floats)
 				ImGui::ColorEdit4("Color", my_color);
+
+				// Plot some values
+				const float my_values[] = { 0.2f, 0.1f, 1.0f, 0.5f, 0.9f, 2.2f };
+				ImGui::PlotLines("Frame Times", my_values, IM_ARRAYSIZE(my_values));
+
 				// Display contents in a scrolling region
-				ImGui::Text("FPS: %d", (int)ms);
+				ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
 				ImGui::BeginChild("Scrolling");
+				ImGui::Text("FPS: %d", (int)ms);
 				ImGui::Text("Cam Rotation: (%f, %f, %f)", cam.rotation.x(), cam.rotation.y(), cam.rotation.z());
 				ImGui::Text("Cam Position: (%f, %f, %f)", cam._from.x(), cam._from.y(), cam._from.z());
 				ImGui::Text("Color: (%f, %f, %f)", my_color[0]*255.0, my_color[1]*255.0, my_color[2]*255.0, my_color[3]*255.0);
@@ -114,7 +129,7 @@ int main(int argc, char* argv[])
 
 				SDL_SetRenderDrawColor(renderer, my_color[0]*255, my_color[1]*255, my_color[2]*255, my_color[3]*255);
 				SDL_RenderClear(renderer);
-                cam.render_scene(objects, window, renderer);
+                cam.render_scene(objects, renderer);
 				ImGui::Render();
 				ImGuiSDL::Render(ImGui::GetDrawData());
                 SDL_RenderPresent(renderer);

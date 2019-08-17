@@ -4,12 +4,21 @@
 #include "vec3.h"
 #include "vec2.h"
 #include "matrix44.h"
+#include "object.h"
 
 #ifdef _WIN32 || WIN32
 	#include <SDL.h>
 #elif defined(__unix__)
 	#include <SDL2/SDL.h>
 #endif
+
+const int WIDTH = 400;
+const int HEIGHT = 200;
+static const int INSIDE = 0; // 0000
+static const int LEFT = 1;   // 0001
+static const int RIGHT = 2;  // 0010
+static const int BOTTOM = 4; // 0100
+static const int TOP = 8;    // 1000
 
 class camera
 {
@@ -79,7 +88,7 @@ public:
 		vec3 ray = pWorld - _from;
 		ray.make_unit_vector();
 		vec3 lookdir = axisZ;
-		if ( dot(ray, lookdir) > 0.0f )
+		if ( dot(ray, lookdir) >= 0.0f )
 			return false;
 
         vec3 pCamera; 
@@ -251,7 +260,7 @@ public:
         // }
     }
 
-    void render_scene( std::vector<Obj> objs, SDL_Window *wind, SDL_Renderer* renderer) {
+    void render_scene( std::vector<Obj> objs, SDL_Renderer* renderer) {
 
         // for (auto obj : objs){
         // 	std::sort(obj.mesh.tris.begin(), obj.mesh.tris.end(), [](Triangle& t1, Triangle &t2)

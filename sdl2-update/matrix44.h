@@ -69,9 +69,11 @@ public:
         c = src[0] * x[0][2] + src[1] * x[1][2] + src[2] * x[2][2] + x[3][2]; 
         w = src[0] * x[0][3] + src[1] * x[1][3] + src[2] * x[2][3] + x[3][3]; 
  
-        dst[0] = a / w; 
-        dst[1] = b / w; 
-        dst[2] = c / w; 
+        if (w != 0.0f){
+            dst[0] = a / w; 
+            dst[1] = b / w; 
+            dst[2] = c / w; 
+        }
     } 
 
     void mult_vec_matrix(const vec3 &src, vec3 &dst) const { 
