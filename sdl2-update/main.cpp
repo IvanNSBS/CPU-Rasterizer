@@ -99,19 +99,20 @@ void render_scene( std::vector<Obj> objs, camera &cam, SDL_Window *wind, SDL_Ren
 				vec2 praster2;
 				vec2 praster3;
 
-				if (cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[0].pos, praster1) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[1].pos, praster2) &&
-					cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[2].pos, praster3)
-				){
-					vec3 col(255, 255, 255);
-					vec3 org(0,0,0);
+				vec3 col(255, 255, 255);
+				SDL_SetRenderDrawColor(renderer, obj.col.x(), obj.col.y(), obj.col.z(), SDL_ALPHA_OPAQUE);
 
-					SDL_SetRenderDrawColor(renderer, obj.col.x(), obj.col.y(), obj.col.z(), SDL_ALPHA_OPAQUE);
+				bool v1, v2, v3;
+				v1 = cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[0].pos, praster1);
+				v2 = cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[1].pos, praster2);
+				v3 = cam.compute_pixel_coordinates(obj.mesh.tris[i].vertex[2].pos, praster3);
 
+				if (v1 && v2)
 					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster2[0], praster2[1]);
+				if(v1 && v3)
 					SDL_RenderDrawLine(renderer, praster1[0], praster1[1], praster3[0], praster3[1]);
+				if(v2 && v3)
 					SDL_RenderDrawLine(renderer, praster2[0], praster2[1], praster3[0], praster3[1]);
-				}
 			}
 		}
 	}
