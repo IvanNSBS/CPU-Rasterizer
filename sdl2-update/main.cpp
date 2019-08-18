@@ -60,7 +60,6 @@ int main(int argc, char* argv[])
 		SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
         if ( true ) {
-            // SDL_SetWindowTitle(window, "Test Title!!");
             SDL_bool done = SDL_FALSE;
 			SDL_SetRelativeMouseMode(SDL_FALSE);
             
@@ -75,6 +74,7 @@ int main(int argc, char* argv[])
 
 			// g++ sdl_test.cpp -IC:\mingw64\include -LC:\mingw64\lib -g -O3 -w -lmingw32 -lSDL2main -lSDL2 -o tst.exe
 			double ms = -1;
+			char buf[256];
 
 			float my_color[4];
 			bool my_tool_active;
@@ -91,7 +91,6 @@ int main(int argc, char* argv[])
 				io.MouseDown[0] = buttons & SDL_BUTTON(SDL_BUTTON_LEFT);
 				io.MouseDown[1] = buttons & SDL_BUTTON(SDL_BUTTON_RIGHT);
 
-
 				ImGui::NewFrame();
 			
 				//ImGui::ShowDemoWindow();
@@ -102,7 +101,7 @@ int main(int argc, char* argv[])
 				{
 					if (ImGui::BeginMenu("File"))
 					{
-						if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+						if (ImGui::MenuItem("Open..", "Ctrl+O")) { objects.push_back( Obj(buf) ); }
 						if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
 						if (ImGui::MenuItem("Close", "Ctrl+W"))  { my_tool_active = false; }
 						ImGui::EndMenu();
@@ -119,6 +118,7 @@ int main(int argc, char* argv[])
 
 				// Display contents in a scrolling region
 				ImGui::TextColored(ImVec4(1,1,0,1), "Important Stuff");
+				ImGui::InputText("string", buf, IM_ARRAYSIZE(buf));
 				ImGui::BeginChild("Scrolling");
 				ImGui::Text("FPS: %d", (int)ms);
 				ImGui::Text("Cam Rotation: (%f, %f, %f)", cam.rotation.x(), cam.rotation.y(), cam.rotation.z());

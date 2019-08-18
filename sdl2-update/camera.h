@@ -12,8 +12,8 @@
 	#include <SDL2/SDL.h>
 #endif
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+const int WIDTH = 600;
+const int HEIGHT = 400;
 static const int INSIDE = 0; // 0000
 static const int LEFT = 1;   // 0001
 static const int RIGHT = 2;  // 0010
@@ -113,13 +113,13 @@ public:
         return visible; 
     }
 
-    void rotate( float dx, float dy)
+    void rotate(float dx, float dy)
     {
         vec3 rot(dx, dy, 0);
         rotation += vec3(dx, dy, 0);
         camToWorld.mult_vec_matrix(rot, rot);
         _at += rot;
-        set_axis_and_matrix(_from, _at, _up, true);
+        set_axis_and_matrix(_from, _at, axisY, true);
     }
 
     void move(vec3 dir) {
