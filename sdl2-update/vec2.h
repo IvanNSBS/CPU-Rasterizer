@@ -51,6 +51,11 @@ inline vec2 operator+(const vec2 &v1, const vec2 &v2) {
     return vec2(v1.e[0] + v2.e[0], v1.e[1] + v2.e[1]);
 }
 
+inline bool operator!=(const vec2 &v1, const vec2 &v2) {
+    return (v1.e[0] != v2.e[0] && v1.e[1] != v2.e[1]);
+}
+
+
 inline vec2 operator-(const vec2 &v1, const vec2 &v2) {
     return vec2(v1.e[0] - v2.e[0], v1.e[1] - v2.e[1]);
 }

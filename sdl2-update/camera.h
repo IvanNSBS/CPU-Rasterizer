@@ -42,7 +42,7 @@ public:
            fov(f), _near(n), imgWidth(iwidth), imgHeight(iheight),
 		   _from(from), _at(at), _up(up)
            {
-                float aspectratio = iwidth/iheight;
+                float aspectratio = iwidth/(float)iheight;
                 float angle = std::tan((f*0.5f)*3.14f/180.0f);
                 top = angle; 
                 right = angle * aspectratio;    
@@ -178,20 +178,21 @@ public:
                 //   y = p0[1] + slope * (xm - x0), where xm is xmin or WIDTH
                 // No need to worry about divide-by-zero because, in each case, the
                 // outcode bit being tested guarantees the denominator is non-zero
+                float slope = (p2.y() - p1.y())/(p2.x() - p1.x());
                 if (codeOut & TOP) {           // point is above the clip window
-                    x = p1.x() + (p2.x() - p1.x()) * ( ymax - p1.y()) / (p2.y() - p1.y());
+                    x = p1.x() + (1.0/slope)*(ymax - p1.y());
                     y = ymax;
                 } 
                 else if (codeOut & BOTTOM) { // point is below the clip window
-                    x = p1.x() + (p2.x() - p1.x()) * ( ymin - p1.y()) / (p2.y() - p1.y());
+                    x = p1.x() + (1.0/slope)*(ymin - p1.y());
                     y = ymin;
                 } 
                 else if (codeOut & RIGHT) {  // point is to the right of clip window
-                    y = p1.y() + (p2.y() - p1.y()) * ( xmax - p1.x()) / (p2.x() - p1.x());
+                    y = p1.y() + slope*(xmax-p1.x());
                     x = xmax;
                 } 
                 else if (codeOut & LEFT) {   // point is to the left of clip window
-                    y = p1.y() + (p2.y() - p1.y()) * ( xmin - p1.x()) / (p2.x() - p1.x());
+                    y = p1.y() + slope*(xmin-p1.x());
                     x = xmin;
                 }
 
@@ -223,22 +224,33 @@ public:
         // Depending upon absolute value of dx & dy
         // choose number of steps to put pixel as
         // steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy)
-        int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+        // int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
 
-        // calculate increment in x & y for each steps
-        float Xinc = dx / (float) steps;
-        float Yinc = dy / (float) steps;
+        // // calculate increment in x & y for each steps
+        // float Xinc = dx / (float) steps;
+        // float Yinc = dy / (float) steps;
 
-        // Put pixel for each step
-        float X = p0.x();
-        float Y = p0.y();
+        // // Put pixel for each step
+        // float X = p0.x();
+        // float Y = p0.y();
         
-        for (int i = 0; i <= steps; i++)
-        {
-            SDL_RenderDrawPoint(renderer, X, Y);
-            X += Xinc;
-            Y += Yinc;
-        }
+		// if(steps > 50)
+		// 	printf("steps = %d\n", steps);
+        // for (int i = 0; i <= steps; i++)
+        // {
+        //     SDL_RenderDrawPoint(renderer, X, Y);
+        //     X += Xinc;
+        //     Y += Yinc;
+        // }
+
+		// int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+		int steps = (p0-p1).length();
+		vec2 dir = unit_vector(p0 - p1);
+		vec2 start = p1;
+		for(int i = 0; i <= steps; i++){ 
+			SDL_RenderDrawPoint(renderer, start.x(), start.y());
+			start += dir;
+		} 
 
         // int dx = p1.x() - p0.x();
         // int dy = p1.y() - p0.y();
@@ -256,7 +268,7 @@ public:
         // 	start = p1.x() > p0.x() ? p0.x() : p1.x();
         // 	step = abs(line.x());
         // }
-        // else{
+        // else{ 
         // 	end = p1.y() > p0.y() ? p1.y() : p0.y();
         // 	start = p1.y() > p0.y() ? p0.y() : p1.y();
         // 	step = abs(line.y());	
