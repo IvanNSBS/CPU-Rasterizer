@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
 			SDL_SetRelativeMouseMode(SDL_FALSE);
             
 			std::vector<Obj> objects;
-            objects.push_back( Obj("./monkey_smooth.obj") );
+            objects.push_back( Obj("./mage.obj") );
 
 			ImGui::CreateContext();
 			ImGuiSDL::Initialize(renderer, WIDTH, HEIGHT);
@@ -137,8 +137,8 @@ int main(int argc, char* argv[])
 				std::clock_t now = std::clock();
                 ms = (double)(now - then);
 				ms /= CLOCKS_PER_SEC;
-				objects[0].rot_x(4.f * ms);
-				objects[0].rot_y(-4.f * ms);
+				// objects[0].rot_x(4.f * ms);
+				// objects[0].rot_y(-4.f * ms);
 
                 while (SDL_PollEvent(&event)) {
 
@@ -147,9 +147,9 @@ int main(int argc, char* argv[])
 					float horizontal_speed = 0.10f;
 					if( event.type == SDL_KEYDOWN){
 						if( event.key.keysym.sym == SDLK_a )
-							cam.move( vec3(-horizontal_speed, 0.0f, 0.0f) );
-						if( event.key.keysym.sym == SDLK_d )
 							cam.move( vec3(horizontal_speed, 0.0f, 0.0f) );
+						if( event.key.keysym.sym == SDLK_d )
+							cam.move( vec3(-horizontal_speed, 0.0f, 0.0f) );
 						if( event.key.keysym.sym == SDLK_w )
 							cam.move( vec3(0.0f, 0.0f, -vertical_speed) );
 						if( event.key.keysym.sym == SDLK_s )
@@ -181,8 +181,8 @@ int main(int argc, char* argv[])
 							float angle = tan((cam.fov * 0.5f) * (M_PI / 180.0f)) * cam._near ; //Multiplica pelo near (zoom)
 							float half_width = angle * aspectratio;
 							float half_height = angle;
-							float Px = (2.0 * ( ( (float)x ) * invWidth) - 1.0) * half_width; 
-							float Py = (1.0 - 2.0 * ( ( (float)y ) * invHeight)) * half_height; 
+							float Px = -(2.0 * ( ( (float)x ) * invWidth) - 1.0) * cam.right*cam._near; 
+							float Py = (1.0 - 2.0 * ( ( (float)y ) * invHeight)) * cam.top*cam._near; 
 
 							vec3 dir = vec3(Px, Py, -1);
 							cam.camToWorld.mult_vec_matrix(dir, dir);
@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
                         float x = event.motion.xrel;
                         float y = event.motion.yrel;
 
-						cam.rotate(x * 15.f * ms, -y * 15.f * ms);
+						cam.rotate(-x * 15.f * ms, -y * 15.f * ms);
                     }
 
                     if (event.type == SDL_QUIT)

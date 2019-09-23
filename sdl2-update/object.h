@@ -292,57 +292,79 @@ public:
 	
 	void rot_x(float deg) {
 
-		matrix44 tr(1, 0, 0, 0,
-					0, 1, 0, 0,
-					0, 0, 1, 0,
-			-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
-		matrix44 itr = tr.inverse();
+		vec3 tr = (mesh.bbox_center.x(), mesh.bbox_center.y(), mesh.bbox_center.z());
 		float sen = sin(deg*M_PI / 180.0);
 		float co = cos(deg*M_PI / 180);
 		matrix44 rot(1, 0, 0, 0,
 					0, co, -sen, 0,
 					0, sen, co, 0,
-					0, 0, 0, 1);
-		matrix44 result = (tr*rot)*itr;
+					-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
+		matrix44 result = rot;
 
 		for ( Triangle &tri : mesh.tris) {
 			result.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
 			result.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
 			result.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
 
+			translate_triangle(tr, tri);
+
 			result.mult_vec_matrix(tri.vertex[0].normal, tri.vertex[0].normal);
 			result.mult_vec_matrix(tri.vertex[1].normal, tri.vertex[1].normal);
 			result.mult_vec_matrix(tri.vertex[2].normal, tri.vertex[2].normal);
+
 		}
 		result.mult_point_matrix(mesh.bbox_center, mesh.bbox_center);
+		translate_triangle(tr, mesh.bbox_center);
 	}
 
+	void translate_triangle(vec3 translation, Triangle &tri)
+	{
+		matrix44 tr(1, 0, 0, 0,
+					0, 1, 0, 0,
+					0, 0, 1, 0,
+					translation.x(), translation.y(), translation.z(), 1);
+
+		tr.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
+		tr.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
+		tr.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
+	}
+
+	void translate_triangle(vec3 translation, vec3 &tri)
+	{
+		matrix44 tr(1, 0, 0, 0,
+					0, 1, 0, 0,
+					0, 0, 1, 0,
+					translation.x(), translation.y(), translation.z(), 1);
+
+		tr.mult_point_matrix(tri, tri);
+		tr.mult_point_matrix(tri, tri);
+		tr.mult_point_matrix(tri, tri);
+	}
 
 	void rot_y(float deg) {
 
-		matrix44 tr(		1,			  0,			0,			0,
-							0,			  1,			0,			0,
-							0,			  0,			1,			0,
-					-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
-		matrix44 itr = tr.inverse();
 		float sen = sin(deg*M_PI / 180.0f);
 		float co = cos(deg*M_PI / 180.0f);
+		vec3 tr = (mesh.bbox_center.x(), mesh.bbox_center.y(), mesh.bbox_center.z());
 		matrix44 rot(co, 0, sen, 0,
 					0, 1, 0, 0,
 					-sen, 0, co, 0,
-					0, 0, 0, 1);
-		matrix44 result = (tr*rot)*itr;
+					-mesh.bbox_center.x(), -mesh.bbox_center.y(), -mesh.bbox_center.z(), 1);
+		matrix44 result = rot;
 
 		for ( Triangle &tri : mesh.tris) {
 			result.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
 			result.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
 			result.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
 
+			translate_triangle(tr, tri);
+
 			result.mult_vec_matrix(tri.vertex[0].normal, tri.vertex[0].normal);
 			result.mult_vec_matrix(tri.vertex[1].normal, tri.vertex[1].normal);
 			result.mult_vec_matrix(tri.vertex[2].normal, tri.vertex[2].normal);
 		}
 		result.mult_point_matrix(mesh.bbox_center, mesh.bbox_center);
+		translate_triangle(tr, mesh.bbox_center);
 
 	}
 
@@ -365,7 +387,7 @@ public:
 			result.mult_point_matrix(tri.vertex[0].pos, tri.vertex[0].pos);
 			result.mult_point_matrix(tri.vertex[1].pos, tri.vertex[1].pos);
 			result.mult_point_matrix(tri.vertex[2].pos, tri.vertex[2].pos);
-
+			
 			result.mult_vec_matrix(tri.vertex[0].normal, tri.vertex[0].normal);
 			result.mult_vec_matrix(tri.vertex[1].normal, tri.vertex[1].normal);
 			result.mult_vec_matrix(tri.vertex[2].normal, tri.vertex[2].normal);

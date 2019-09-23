@@ -5,6 +5,7 @@
 #include "vec2.h"
 #include "matrix44.h"
 #include "object.h"
+#include <algorithm>
 
 #ifdef _WIN32 || WIN32
 	#include <SDL.h>
@@ -28,36 +29,45 @@ public:
     float bottom, left, top, right;
     matrix44 camToWorld;
     matrix44 worldToCamera;
-
+    float _far = 1000.0f;
 	vec3 _from, _at, _up;
     vec3 axisX, axisY, axisZ;
-
     vec3 rotation = vec3(0,0,0);
 
+    std::vector<float> z_buffer;
 public:
     camera();
-    camera(const vec3 &from, const vec3 &at, const vec3 &up,
-           const float &f, const float &n,
-           const int &iwidth, const int &iheight): 
-           fov(f), _near(n), imgWidth(iwidth), imgHeight(iheight),
-		   _from(from), _at(at), _up(up)
-           {
-                float aspectratio = iwidth/(float)iheight;
-                float angle = std::tan((f*0.5f)*3.14f/180.0f);
-                top = angle; 
-                right = angle * aspectratio;    
-                bottom = -top; 
-                left = -right;
-                printf("l = %f, r = %f, t = %f, b = %f\n", left, right, top, bottom);
-                set_axis_and_matrix(from, at, up, true);
-           }
+    camera(
+        const vec3 &from, const vec3 &at, const vec3 &up,
+        const float &f, const float &n,
+        const int &iwidth, const int &iheight): 
+        fov(f), _near(n), imgWidth(iwidth), imgHeight(iheight),
+        _from(from), _at(at), _up(up)
+    {
+        float aspectratio = iwidth/(float)iheight;
+        float angle = std::tan((f*0.5f)*3.14f/180.0f);
+        top = angle; 
+        right = angle * aspectratio;    
+        bottom = -top; 
+        left = -right;
+        printf("l = %f, r = %f, t = %f, b = %f\n", left, right, top, bottom);
+        set_axis_and_matrix(from, at, up, true);
+        reset_zbuffer();
+    }
+
+    void reset_zbuffer(){ 
+        z_buffer.clear();
+        z_buffer.reserve(WIDTH*HEIGHT);
+        for(int i = 0; i < WIDTH*HEIGHT; i++)
+            z_buffer.push_back(-100000.0f);
+    }
 
     void set_axis_and_matrix(const vec3 &from, const vec3 &at, const vec3 &up, bool update_axis = false)
     {
         if( update_axis ){
             axisZ = unit_vector( from-at );
             axisY = unit_vector( up - ( axisZ * ( dot(up,axisZ)/dot(axisZ, axisZ) ) ) );
-            axisX = unit_vector( cross(axisY, axisZ) );
+            axisX = unit_vector( cross(axisZ, axisY) );
         }
         else{
             axisX.make_unit_vector();
@@ -84,33 +94,37 @@ public:
         worldToCamera = camToWorld.inverse();
     }
 
-    bool compute_pixel_coordinates(const vec3 &pWorld, vec2 &pRaster) 
+    bool compute_pixel_coordinates(const vec3 &pWorld, vec2 &praster, vec3 *screen = nullptr) 
     { 
-		vec3 ray = pWorld - _from;
-		ray.make_unit_vector();
-		vec3 lookdir = axisZ;
-		if ( dot(ray, lookdir) >= 0.0f )
-			return false;
+        vec3 toObj = vec3(pWorld.x() - _from.x(), pWorld.y() - _from.y(), pWorld.z() - _from.z());
+        toObj.make_unit_vector();
+        if (dot(toObj, axisZ) > 0) {
+            return false; //Retorna falso se o ponto estiver atr�s da camera
+        }
+ 
+        vec3 pScreen;
+        worldToCamera.mult_point_matrix(pWorld, pScreen);
 
-        vec3 pCamera; 
-        vec2 pScreen; 
-        worldToCamera.mult_point_matrix(pWorld, pCamera); 
-        
-        pScreen[0] = pCamera.x() * _near / (-pCamera.z()); 
-        pScreen[1] = pCamera.y() * _near / (-pCamera.z()); 
-    
-        vec2 pNDC;
-        pNDC[0] = (pScreen.x() + right) / (2 * right); 
-        pNDC[1] = (pScreen.y() + top) / (2 * top); 
-
-        pRaster[0] = (pNDC.x() * imgWidth); 
-        pRaster[1] = ((1 - pNDC.y()) * imgHeight); 
-    
-        bool visible = true; 
-        /*if (pScreen.x() < left || pScreen.x() > right || pScreen.y() < bottom || pScreen.y() > top) 
-            visible = false;*/ 
-    
-        return visible; 
+ 
+        vec3 ccdc = vec3(pScreen.x() * (_near / pScreen.z()), pScreen.y() * (_near / pScreen.z()), _near);
+ 
+        matrix44 auxMatriz = matrix44((2 * _near) / (right - left), 0, 0, 0,
+            0, (2 * _near) / (bottom - top), 0, 0,
+            -(right + left) / (right - left), -(bottom + top) / (bottom - top), (_far + _near) / (_far - _near), 1,
+            0, 0, -(2 * _near) / (_far - _near), 0);
+ 
+        vec3 pndc;
+        auxMatriz.mult_point_matrix(ccdc, pndc);
+        if(screen)
+            screen = new vec3(0, 0, -pScreen.z());
+ 
+        praster = vec2((1 + pndc.x()) / 2 * imgWidth, (1 - pndc.y()) / 2 * imgHeight);
+        if (pndc.y() <= top && pndc.y() >= bottom && pndc.x() <= right && pndc.x() >= left) {
+            return true;
+        }
+        else {
+            return false; // Retornar verdadeiro se o ponto pode ser visto
+        }
     }
 
     void rotate(float dx, float dy)
@@ -119,7 +133,7 @@ public:
         rotation += vec3(dx, dy, 0);
         camToWorld.mult_vec_matrix(rot, rot);
         _at += rot;
-        set_axis_and_matrix(_from, _at, axisY, true);
+        set_axis_and_matrix(_from, _at, _up, true);
     }
 
     void move(vec3 dir) {
@@ -213,6 +227,90 @@ public:
         return accept;
     }
 
+    void fill_triangle(
+        SDL_Renderer* renderer, 
+        const vec2 &v0, 
+        const vec2 &v1, 
+        const vec2 &v2,
+        const Vertex *vert,
+        const float *screen_z,
+        const vec3 &light_dir)
+    {
+        auto edge_function = [](const vec2 &p, const vec2 &v0, const vec2& v1, float &out) -> bool
+        {
+            out = (p.x() - v0.x())*(v1.y() - v0.y()) - (p.y() - v0.y())*(v1.x() - v0.x());
+            return out >= 0; 
+        };
+        
+        auto get_bbox = [](
+            const vec2 &v0,
+            const vec2 &v1,
+            const vec2 &v2,
+            vec2 &mn, 
+            vec2 &mx)
+        {
+            float minx = 100000, miny = 100000, maxx = -100000, maxy = -100000;
+            std::vector<vec2> tri;
+            tri.reserve(3);
+            tri.push_back(v0);
+            tri.push_back(v1);
+            tri.push_back(v2);
+            for(int i = 0; i < 3; i++)
+            {
+                if( tri[i].x() < minx)
+                    minx = tri[i].x();
+                if( tri[i].y() < miny)
+                    miny = tri[i].y();
+
+                if( tri[i].x() > maxx)
+                    maxx = tri[i].x();
+                if( tri[i].y() > maxy)
+                    maxy = tri[i].y();
+            }
+            mn = vec2(minx,miny);
+            mx = vec2(maxx,maxy);
+        };
+
+        vec2 min, max;
+        get_bbox(v0, v1, v2, min, max);
+        vec2 cur_xy;
+        float out_area;
+        float w0, w1, w2;
+        edge_function(v0, v1, v2, out_area);
+        
+        for(int y = min.y(); y < max.y(); y++)
+        {
+            for(int x = min.x(); x < max.x(); x++)
+            {
+                cur_xy = vec2(x,y);
+                bool c1 = edge_function( cur_xy, v0, v1, w0 );
+                bool c2 = edge_function( cur_xy, v1, v2, w1 );
+                bool c3 = edge_function( cur_xy, v2, v0, w2 );
+                if(c1 && c2 && c3)
+                {
+                    // float z = w1*(screen_z[0]) + w2*(screen_z[1]) + w0*(screen_z[2]);
+                    //z = 1.0f/z;
+                    // float z = (screen_z[0] + screen_z[1] + screen_z[2])/3.0f;
+                    float z = (vert[0].pos.z() + vert[1].pos.z() + vert[2].pos.z())/3.0f;
+                    // float z = w1*vert[0].pos.z() + w2*vert[1].pos.z() + w0*vert[2].pos.z();
+                    if(z > z_buffer[y*WIDTH + x])
+                    {
+                        z_buffer[y*WIDTH + x] = z;
+                        w0 /= out_area;
+                        w1 /= out_area;
+                        w2 /= out_area;
+                        vec3 normal = w1*vert[0].normal + w2*vert[1].normal + w0*vert[2].normal;
+                        float val = std::max(0.0f, -dot(normal, light_dir));
+                        vec3 color = val*vec3(210,210,210) + vec3(40, 40, 40);
+                        //  printf("z = %f\n", z);
+                        SDL_SetRenderDrawColor(renderer, color.x(), color.y(), color.z(), 255);
+                        SDL_RenderDrawPoint(renderer, cur_xy.x(), cur_xy.y());
+                    }
+                }
+            }
+        }
+    }
+
     void draw_lines( const vec2 &p0, const vec2 &p1, SDL_Renderer *renderer, const vec3 &col)
     {
         // calculate dx , dy
@@ -285,27 +383,13 @@ public:
 
     void render_scene( std::vector<Obj> objs, SDL_Renderer* renderer) {
 
-        // for (auto obj : objs){
-        // 	std::sort(obj.mesh.tris.begin(), obj.mesh.tris.end(), [](Triangle& t1, Triangle &t2)
-        // 		{
-        // 			std::vector<float> d1 = { t1.vert[0].z(), t1.vert[1].z(), t1.vert[2].z() };
-        // 			std::vector<float> d2 = { t2.vert[0].z(), t2.vert[1].z(), t2.vert[2].z() };
-
-        // 			std::sort( d1.begin(), d1.end(), []( float &f1, float &f2) { return f1 > f2; } );
-        // 			std::sort( d2.begin(), d2.end(), []( float &f1, float &f2) { return f1 > f2; } );
-
-        // 			if( d1[0] != d2[0])
-        // 				return d1[0] < d2[0];
-        // 			else if (d1[1] != d2[1])
-        // 				return d1[1] < d2[2];
-        // 			else
-        // 				return d1[2] < d2[2];
-        // 		});
-        // }
-
         vec3 light(0.0f, 0.0f, -1.0f);
         light.make_unit_vector();
 
+
+
+
+        reset_zbuffer();
         for (auto obj : objs){
             for (int i = 0; i < obj.mesh.tris.size(); i++)
             {
@@ -318,6 +402,7 @@ public:
                 if ( dot(normal, ray ) <= 0.0f ) {
 
                     float dp = dot(normal, light);
+                    vec3 *screen1 = new vec3(), *screen2 = new vec3(), *screen3 = new vec3();
                     vec2 praster1;
                     vec2 praster2;
                     vec2 praster3;
@@ -326,40 +411,15 @@ public:
                     SDL_SetRenderDrawColor(renderer, obj.col.x(), obj.col.y(), obj.col.z(), SDL_ALPHA_OPAQUE);
 
                     bool v1, v2, v3;
-                    v1 = compute_pixel_coordinates(obj.mesh.tris[i].vertex[0].pos, praster1);
-                    v2 = compute_pixel_coordinates(obj.mesh.tris[i].vertex[1].pos, praster2);
-                    v3 = compute_pixel_coordinates(obj.mesh.tris[i].vertex[2].pos, praster3);
+                    v1 = compute_pixel_coordinates(obj.mesh.tris[i].vertex[0].pos, praster1, screen1);
+                    v2 = compute_pixel_coordinates(obj.mesh.tris[i].vertex[1].pos, praster2, screen2);
+                    v3 = compute_pixel_coordinates(obj.mesh.tris[i].vertex[2].pos, praster3, screen3);
+                    
+                    float zs[3] = { (*screen1).z(), (*screen2).z(), (*screen3).z() };
 
+                    if( v1 && v2 && v3)
+                        fill_triangle(renderer, praster1, praster2, praster3, obj.mesh.tris[i].vertex, zs, light);
 
-                    if(v1 && v2){
-                        bool clip = false;
-                        vec2 raster1 = praster1;
-                        vec2 raster2 = praster2;
-
-                        clip = clip_line(raster1, raster2, 0);
-                        if(clip)
-                            draw_lines(raster1, raster2, renderer, col);
-                        
-                    }
-                    if(v1 && v3){
-                        bool clip = false;
-                        vec2 raster1 = praster1;
-                        vec2 raster3 = praster3;
-
-                        clip = clip_line(raster1, raster3, 0);
-                        if(clip)
-                            draw_lines(raster1, raster3, renderer, col);
-                    }
-                    if(v2 && v3){
-                        bool clip = false;
-                        vec2 raster2 = praster2;
-                        vec2 raster3 = praster3;
-
-                        clip = clip_line(raster2, raster3, 0);
-                        if(clip)
-                            draw_lines(raster2, raster3, renderer, col);
-
-                    }
                 }
             }
         }
