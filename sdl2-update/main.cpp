@@ -15,40 +15,65 @@
 bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_col, vec3 &out_point, float &t)
 {
     const float EPSILON = 0.0000001;
-    vec3 vertex0 = tr.vertex[0].pos;
-    vec3 vertex1 = tr.vertex[1].pos;  
-    vec3 vertex2 = tr.vertex[2].pos;
-    vec3 edge1, edge2, h, s, q;
-    float a,f,u,v;
-    edge1 = vertex1 - vertex0;
-    edge2 = vertex2 - vertex0;
-    h = cross(ray_dir, edge2);
-    a = dot( edge1, h );
-    if (a > -EPSILON && a < EPSILON){
-        return false;    // This ray is parallel to this triangle.
-	}
-    f = 1.0/a;
-    s = ray_org - vertex0;
-    u = f *dot(s,h);
-    if (u < 0.0 || u > 1.0)
-        return false;
-    q = cross(s, edge1);
-    v = f * dot(ray_dir, q);
-    if (v < 0.0 || u + v > 1.0)
-        return false;
-    // At this stage we can compute t to find out where the intersection point is on the line.
-    t = f * dot(edge2, q);
-    if (t > EPSILON) // ray intersection
-    {
-		float w = 1.0 - u - v;
-		vec3 normal = w*tr.vertex[0].normal + u*tr.vertex[1].normal + v*tr.vertex[1].normal; 
-		out_col = vec3(0, 255, 0) * (dot(normal, vec3(0,0, -1.0f)));
-        out_point = ray_org + ray_dir * t;
-        return true;
-    }
-    else {
-        return false;
-	}// This means that there is a line intersection but not a ray intersection.
+    // vec3 vertex0 = tr.vertex[0].pos;
+    // vec3 vertex1 = tr.vertex[1].pos;  
+    // vec3 vertex2 = tr.vertex[2].pos;
+    // vec3 edge1, edge2, h, s, q;
+    // float a,f,u,v;
+    // edge1 = vertex1 - vertex0;
+    // edge2 = vertex2 - vertex0;
+    // h = cross(ray_dir, edge2);
+    // a = dot( edge1, h );
+    // if (a > -EPSILON && a < EPSILON){
+    //     return false;    // This ray is parallel to this triangle.
+	// }
+    // f = 1.0/a;
+    // s = ray_org - vertex0;
+    // u = f *dot(s,h);
+    // if (u < 0.0 || u > 1.0)
+    //     return false;
+    // q = cross(s, edge1);
+    // v = f * dot(ray_dir, q);
+    // if (v < 0.0 || u + v > 1.0)
+    //     return false;
+    // // At this stage we can compute t to find out where the intersection point is on the line.
+    // t = f * dot(edge2, q);
+    // if (t > EPSILON) // ray intersection
+    // {
+	// 	float w = 1.0 - u - v;
+	// 	vec3 normal = w*tr.vertex[0].normal + u*tr.vertex[1].normal + v*tr.vertex[1].normal; 
+	// 	out_col = vec3(0, 255, 0) * (dot(normal, vec3(0,0, -1.0f)));
+    //     out_point = ray_org + ray_dir * t;
+    //     return true;
+    // }
+    // else {
+    //     return false;
+	// }// This means that there is a line intersection but not a ray intersection.
+	vec3 v0 = tr.vertex[0].pos;
+	vec3 v1 = tr.vertex[1].pos;
+	vec3 v2 = tr.vertex[2].pos;
+	vec3 normal = cross(v1-v0, v2-v0);
+
+	if(abs(dot(normal, ray_dir)) < EPSILON)
+		return false;
+
+	float d = dot(normal, v0);
+	t = (dot(normal, ray_org) + d)/dot(normal, ray_dir);
+	if(t > 0)
+		return false;
+	out_point = ray_org + t*ray_dir;
+
+	vec3 cross1 = cross(v1-v0, out_point - v0);
+	vec3 cross2 = cross(v2-v1, out_point - v1);
+	vec3 cross3 = cross(v2-v0, out_point - v2);
+	if(dot(normal, cross1) < 0)
+		return false;
+	if(dot(normal, cross2) < 0)
+		return false;
+	if(dot(normal, cross3) < 0)
+		return false;
+	
+	return true;
 }
 
 
@@ -187,6 +212,8 @@ int main(int argc, char* argv[])
 							vec3 dir = vec3(Px, Py, -1);
 							cam.camToWorld.mult_vec_matrix(dir, dir);
 							dir.make_unit_vector();
+
+							printf(" dir = (%f, %f, %f)\n", dir.x(), dir.y(), dir.z());
 							vec3 col, point;
 							float t;
 
