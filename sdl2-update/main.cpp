@@ -64,13 +64,13 @@ int main(int argc, char* argv[])
 			SDL_SetRelativeMouseMode(SDL_FALSE);
             
 			std::vector<Obj> objects;
-            objects.push_back( Obj("./mage.obj") );
+            objects.push_back( Obj("./monkey_smooth.obj") );
 
 			ImGui::CreateContext();
 			ImGuiSDL::Initialize(renderer, WIDTH, HEIGHT);
 
             bool mouse_down = false;
-            camera cam(vec3(0, 0, 20), vec3(0, 0, -1), vec3(0, 1, 0), 90.0f, 1.f, WIDTH, HEIGHT);
+            camera cam(vec3(0, 2, 3), vec3(0, 0, -1), vec3(0, 1, 0), 90.0f, 1.5f, WIDTH, HEIGHT);
 
 			// g++ sdl_test.cpp -IC:\mingw64\include -LC:\mingw64\lib -g -O3 -w -lmingw32 -lSDL2main -lSDL2 -o tst.exe
 			double ms = -1;
