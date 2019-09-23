@@ -12,7 +12,7 @@
 #define PI 3.14159265
 
 
-bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_col, vec3 &out_point, float &t)
+bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 dir, vec3 &out_col, vec3 &out_point, float &t)
 {
     const float EPSILON = 0.0000001;
     // vec3 vertex0 = tr.vertex[0].pos;
@@ -22,7 +22,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
     // float a,f,u,v;
     // edge1 = vertex1 - vertex0;
     // edge2 = vertex2 - vertex0;
-    // h = cross(ray_dir, edge2);
+    // h = cross(dir, edge2);
     // a = dot( edge1, h );
     // if (a > -EPSILON && a < EPSILON){
     //     return false;    // This ray is parallel to this triangle.
@@ -33,7 +33,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
     // if (u < 0.0 || u > 1.0)
     //     return false;
     // q = cross(s, edge1);
-    // v = f * dot(ray_dir, q);
+    // v = f * dot(dir, q);
     // if (v < 0.0 || u + v > 1.0)
     //     return false;
     // // At this stage we can compute t to find out where the intersection point is on the line.
@@ -43,39 +43,73 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 ray_dir, vec3 &out_co
 	// 	float w = 1.0 - u - v;
 	// 	vec3 normal = w*tr.vertex[0].normal + u*tr.vertex[1].normal + v*tr.vertex[1].normal; 
 	// 	out_col = vec3(0, 255, 0) * (dot(normal, vec3(0,0, -1.0f)));
-    //     out_point = ray_org + ray_dir * t;
+    //     out_point = ray_org + dir * t;
     //     return true;
     // }
     // else {
     //     return false;
 	// }// This means that there is a line intersection but not a ray intersection.
-	vec3 v0 = tr.vertex[0].pos;
-	vec3 v1 = tr.vertex[1].pos;
-	vec3 v2 = tr.vertex[2].pos;
-	vec3 normal = cross(v1-v0, v2-v0);
+    // compute plane's normal
 
-	if(abs(dot(normal, ray_dir)) < EPSILON)
-		return false;
+    vec3 v0 = tr.vertex[0].pos;
+    vec3 v1 = tr.vertex[1].pos;  
+    vec3 v2 = tr.vertex[2].pos;
+    vec3 v0v1 = v1 - v0; 
+    vec3 v0v2 = v2 - v0; 
+    // no need to normalize
+    vec3 N = cross(v0v1, v0v2); // N 
+ 
+    // check if ray and plane are parallel ?
+    float NdotRayDirection = dot(N, dir); 
+    if (fabs(NdotRayDirection) < EPSILON) // almost 0 
+        return false; // they are parallel so they don't intersect ! 
+ 
+    // compute d parameter using equation 2
+    float d = dot(N,v0); 
+ 
+    // compute t (equation 3)
+    t = (dot(N, ray_org) + d) / NdotRayDirection; 
+    // check if the triangle is in behind the ray
+    if (t < 0) return false; // the triangle is behind 
+ 
+    // compute the intersection point using equation 1
+    vec3 P = ray_org + t * dir;
+ 
+    // Step 2: inside-outside test
+    vec3 C; // vector perpendicular to triangle's plane 
+ 
+    // edge 0
+    vec3 edge0 = v1 - v0; 
+    vec3 vp0 = P - v0; 
+    C = cross(edge0, vp0); 
+    if (dot(N,C) < 0){
+        printf("edge0\n");	
+	    return false; // P is on the right side 
+	} 
+ 
+    // edge 1
+    vec3 edge1 = v2 - v1; 
+    vec3 vp1 = P - v1; 
+    C = cross(edge1, vp1); 
+    if (dot(N,C) < 0){
+		printf("edge1\n");
+	    return false; // P is on the right side 
+	} 
+ 
+    // edge 2
+    vec3 edge2 = v0 - v2; 
+    vec3 vp2 = P - v2; 
+    C = cross(edge2, vp2); 
+    if (dot(N,C) < 0){
+		printf("edge2\n");
+	    return false; // P is on the right side; 
+	} 
 
-	float d = dot(normal, v0);
-	t = (dot(normal, ray_org) + d)/dot(normal, ray_dir);
-	if(t > 0)
-		return false;
-	out_point = ray_org + t*ray_dir;
-
-	vec3 cross1 = cross(v1-v0, out_point - v0);
-	vec3 cross2 = cross(v2-v1, out_point - v1);
-	vec3 cross3 = cross(v2-v0, out_point - v2);
-	if(dot(normal, cross1) < 0)
-		return false;
-	if(dot(normal, cross2) < 0)
-		return false;
-	if(dot(normal, cross3) < 0)
-		return false;
-	
-	return true;
+ 
+    return true; // this ray hits the triangle 
 }
 
+#undef main
 
 int main(int argc, char* argv[])
 {
@@ -95,7 +129,7 @@ int main(int argc, char* argv[])
 			ImGuiSDL::Initialize(renderer, WIDTH, HEIGHT);
 
             bool mouse_down = false;
-            camera cam(vec3(0, 2, 3), vec3(0, 0, -1), vec3(0, 1, 0), 90.0f, 1.5f, WIDTH, HEIGHT);
+            camera cam(vec3(0, 0, 3), vec3(0, 0, -1), vec3(0, 1, 0), 90.0f, 1.5f, WIDTH, HEIGHT);
 
 			// g++ sdl_test.cpp -IC:\mingw64\include -LC:\mingw64\lib -g -O3 -w -lmingw32 -lSDL2main -lSDL2 -o tst.exe
 			double ms = -1;
@@ -167,9 +201,9 @@ int main(int argc, char* argv[])
 
                 while (SDL_PollEvent(&event)) {
 
-					float vertical_speed = 1.0f;	
-					float up_speed = 0.2f;
-					float horizontal_speed = 0.10f;
+					float vertical_speed = 0.1f;	
+					float up_speed = 0.05f;
+					float horizontal_speed = 0.02f;
 					if( event.type == SDL_KEYDOWN){
 						if( event.key.keysym.sym == SDLK_a )
 							cam.move( vec3(horizontal_speed, 0.0f, 0.0f) );
