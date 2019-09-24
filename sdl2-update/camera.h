@@ -119,8 +119,7 @@ public:
         // pRaster[0] = (vertexNDC.x() + 1) / 2 * imgWidth; 
         // // in raster space y is down so invert direction
         // pRaster[1] = (1 - vertexNDC.y()) / 2 * imgHeight; 
-        // if(screen)  
-        //     screen = new vec3(0, 0, -vertexCamera.z());
+        // z = -vertexCamera.z();
         // return true;
 
         vec3 toObj = vec3(pWorld.x() - _from.x(), pWorld.y() - _from.y(), pWorld.z() - _from.z());

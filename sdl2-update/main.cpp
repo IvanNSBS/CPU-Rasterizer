@@ -15,6 +15,8 @@
 bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 dir, vec3 &out_col, vec3 &out_point, float &t)
 {
     const float EPSILON = 0.0000001;
+
+	
     // vec3 vertex0 = tr.vertex[0].pos;
     // vec3 vertex1 = tr.vertex[1].pos;  
     // vec3 vertex2 = tr.vertex[2].pos;
@@ -49,7 +51,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 dir, vec3 &out_col, v
     // else {
     //     return false;
 	// }// This means that there is a line intersection but not a ray intersection.
-    // compute plane's normal
+    // // compute plane's normal
 
     vec3 v0 = tr.vertex[0].pos;
     vec3 v1 = tr.vertex[1].pos;  
@@ -68,7 +70,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 dir, vec3 &out_col, v
     float d = dot(N,v0); 
  
     // compute t (equation 3)
-    t = (dot(N, ray_org) + d) / NdotRayDirection; 
+    t = -(dot(N, ray_org) - d) / NdotRayDirection; 
     // check if the triangle is in behind the ray
     if (t < 0) return false; // the triangle is behind 
  
@@ -83,7 +85,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 dir, vec3 &out_col, v
     vec3 vp0 = P - v0; 
     C = cross(edge0, vp0); 
     if (dot(N,C) < 0){
-        printf("edge0\n");	
+        // printf("edge0\n");	
 	    return false; // P is on the right side 
 	} 
  
@@ -92,7 +94,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 dir, vec3 &out_col, v
     vec3 vp1 = P - v1; 
     C = cross(edge1, vp1); 
     if (dot(N,C) < 0){
-		printf("edge1\n");
+		// printf("edge1\n");
 	    return false; // P is on the right side 
 	} 
  
@@ -101,7 +103,7 @@ bool intersects_triangle( Triangle &tr, vec3 ray_org, vec3 dir, vec3 &out_col, v
     vec3 vp2 = P - v2; 
     C = cross(edge2, vp2); 
     if (dot(N,C) < 0){
-		printf("edge2\n");
+		// printf("edge2\n");
 	    return false; // P is on the right side; 
 	} 
 
@@ -189,9 +191,42 @@ int main(int argc, char* argv[])
 				SDL_SetRenderDrawColor(renderer, my_color[0]*255, my_color[1]*255, my_color[2]*255, my_color[3]*255);
 				SDL_RenderClear(renderer);
                 cam.render_scene(objects, renderer);
+				// for(int y = 0; y < HEIGHT; y++)
+				// {
+				// 	for(int x = 0; x < WIDTH; x++)
+				// 	{
+				// 		float invWidth = 1.0f/float(WIDTH), invHeight = 1.0f/float(HEIGHT); 
+				// 		float aspectratio = WIDTH/float(HEIGHT); 
+				// 		//Angulo de abertura da camera
+				// 		float angle = tan((cam.fov * 0.5f) * (M_PI / 180.0f)) * cam._near ; //Multiplica pelo near (zoom)
+				// 		float half_width = angle * aspectratio;
+				// 		float half_height = angle;
+				// 		float Px = -(2.0 * ( ( (float)x ) * invWidth) - 1.0) * cam.right/cam._near; 
+				// 		float Py = (1.0 - 2.0 * ( ( (float)y ) * invHeight)) * cam.top/cam._near; 
+
+				// 		vec3 dir = vec3(Px, Py, -1);
+				// 		cam.camToWorld.mult_vec_matrix(dir, dir);
+				// 		dir.make_unit_vector();
+
+				// 		vec3 col, point;
+				// 		float t;
+
+				// 		bool finish = false;
+				// 		for( auto &object : objects){
+				// 			for( auto &tr : object.mesh.tris){
+				// 				if( intersects_triangle(tr, cam._from, dir, col, point, t) ){
+				// 					object.col = vec3(0, 255, 0);
+				// 					SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+				// 					SDL_RenderDrawPoint(renderer, x, y);
+				// 				}
+				// 			}
+				// 		}
+				// 	}
+				// }
 				ImGui::Render();
 				ImGuiSDL::Render(ImGui::GetDrawData());
                 SDL_RenderPresent(renderer);
+
 
 				std::clock_t now = std::clock();
                 ms = (double)(now - then);
@@ -240,23 +275,22 @@ int main(int argc, char* argv[])
 							float angle = tan((cam.fov * 0.5f) * (M_PI / 180.0f)) * cam._near ; //Multiplica pelo near (zoom)
 							float half_width = angle * aspectratio;
 							float half_height = angle;
-							float Px = -(2.0 * ( ( (float)x ) * invWidth) - 1.0) * cam.right*cam._near; 
-							float Py = (1.0 - 2.0 * ( ( (float)y ) * invHeight)) * cam.top*cam._near; 
+							float Px = -(2.0 * ( ( (float)x ) * invWidth) - 1.0) * cam.right/cam._near; 
+							float Py = (1.0 - 2.0 * ( ( (float)y ) * invHeight)) * cam.top/cam._near; 
 
 							vec3 dir = vec3(Px, Py, -1);
 							cam.camToWorld.mult_vec_matrix(dir, dir);
 							dir.make_unit_vector();
 
-							printf(" dir = (%f, %f, %f)\n", dir.x(), dir.y(), dir.z());
+							printf("dir = (%f, %f, %f)\n", dir.x(), dir.y(), dir.z());
 							vec3 col, point;
 							float t;
 
 							bool finish = false;
 							for( auto &object : objects){
-								printf("iterating...\n");
 								for( auto &tr : object.mesh.tris){
 									if( intersects_triangle(tr, cam._from, dir, col, point, t) ){
-										printf("pressed left mouse\n");
+										printf("Interescted!\n");
 										object.col = vec3(0, 255, 0);
 										finish = true;
 										break;

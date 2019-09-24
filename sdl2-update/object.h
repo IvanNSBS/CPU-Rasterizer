@@ -179,7 +179,8 @@ public:
 			}
 		};
 
-		for (unsigned int i = 0; i < 1; i+=3)
+		// for (unsigned int i = 0; i < 1; i+=3)
+		for (unsigned int i = 0; i < vertexIndices.size(); i+=3)
 		{
 			unsigned int v1 = vertexIndices[i];
 			unsigned int v2 = vertexIndices[i+1];
