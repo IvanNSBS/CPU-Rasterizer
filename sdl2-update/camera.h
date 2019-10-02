@@ -341,7 +341,7 @@ public:
 
                         // vec3 color = p*val*vec3(210,210,210) + vec3(40, 40, 40);
                         int tx = std::floor( st.x()*(float)obj->texture_width);
-                        int ty = std::floor( st.y()*(float)obj->texture_height);
+                        int ty = std::floor( (1.0f - st.y())*(float)obj->texture_height);
                         int idx = (ty*obj->texture_width + tx);
                         // printf("s = %f, t = %f\n", st.x(), st.y());
                         // printf("idx = %d\n", idx);
