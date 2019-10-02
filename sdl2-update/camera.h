@@ -308,6 +308,11 @@ public:
         screen_z[1] = 1.0/screen_z[1]; 
         screen_z[2] = 1.0/screen_z[2]; 
 
+        vec2 st0 = vert[0].uv*screen_z[0];
+        vec2 st1 = vert[1].uv*screen_z[1];
+        vec2 st2 = vert[2].uv*screen_z[2];
+
+        vec2 st;
 
         for(int y = min.y(); y < max.y(); y++)
         {
@@ -324,16 +329,19 @@ public:
                     w2 /= out_area;
                     float z = w0*(screen_z[0]) + w1*(screen_z[1]) + w2*(screen_z[2]);
                     z = 1.0f/z;
-                    // z = (screen_z[0] + screen_z[1] + screen_z[2])/3.0f;
-                    // z = (vert[0].pos.z() + vert[1].pos.z() + vert[2].pos.z())/3.0f;
-                    // float z = w1*vert[0].pos.z() + w2*vert[1].pos.z() + w0*vert[2].pos.z();
-                    // printf("cur z = %f\nnew_z = %f\n", z_buffer[y*WIDTH + x], z);
                     if(z < z_buffer[y*WIDTH + x])
                     {
                         z_buffer[y*WIDTH + x] = z;
                         vec3 normal = w0*vert[0].normal + w1*vert[1].normal + w2*vert[2].normal;
+                        st = w0*st0 + w1*st1 + w2*st2;
+                        st *= z;
+                        float p = (fmod(st.x() * 10, 1.0) > 0.5) ^ (fmod(st.y() * 10, 1.0) < 0.5);
                         float val = std::max(0.0f, -dot(normal, light_dir));
-                        vec3 color = val*vec3(210,210,210) + vec3(40, 40, 40);
+
+                        vec3 color = p*val*vec3(210,210,210) + vec3(40, 40, 40);
+                        color[0] = std::min(color[0], 255.f);
+                        color[1] = std::min(color[1], 255.f);
+                        color[2] = std::min(color[2], 255.f);
 
                         SDL_SetRenderDrawColor(renderer, color.x(), color.y(), color.z(), 255);
                         SDL_RenderDrawPoint(renderer, cur_xy.x(), cur_xy.y());
@@ -369,8 +377,6 @@ public:
                 vec3 normal = (1.f/3.f) * n1 + (1.f/3.f)*n2 + (1.f/3.f)*n3;
 
                 vec3 ray = obj.mesh.tris[i].vertex[0].pos - _from;
-                if ( dot(normal, ray ) <= 0.0f ) {
-
                     float dp = dot(normal, light);
                     float z1, z2, z3;
                     vec2 praster1;
@@ -420,7 +426,6 @@ public:
 
                     // }
 
-                }
             }
         }
     }
