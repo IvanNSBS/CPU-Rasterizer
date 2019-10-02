@@ -8,6 +8,7 @@
 #include "vec3.h"
 #include "vec2.h"
 #include "matrix44.h"
+#include "lodepng.h"
 
 #define min_x 0
 #define max_x 1
@@ -246,11 +247,76 @@ public:
 	Mesh mesh;
 	Transform transform;
 	vec3 col;
+	std::vector<vec3> texture_buffer;
+	int texture_width, texture_height;
 
 	Obj(){}
 	Obj( const char* file_path){
 		mesh.load_mesh_from_file(file_path); transform = Transform(); 
 		col = vec3(255,255,255);
+	}
+	Obj( const char* file_path, const char* texture_path){
+		mesh.load_mesh_from_file(file_path); transform = Transform(); 
+		col = vec3(255,255,255);
+		decodeOneStep(texture_path);
+	}
+	void decodeOneStep(const char* filename) {
+		std::vector<unsigned char> png;
+		std::vector<unsigned char> image; //the raw pixels
+		unsigned width, height;
+		lodepng::State state; //optionally customize this one
+
+		unsigned error = lodepng::load_file(png, filename); //load the image file with given filename
+		if(!error) error = lodepng::decode(image, width, height, state, png);
+
+		//if there's an error, display it
+		if(error) std::cout << "decoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
+
+		//the pixels are now in the vector "image", 4 bytes per pixel, ordered RGBARGBA..., use it as texture, draw it, ...
+		texture_buffer.reserve( (int)width*(int)height);
+		for(int i = 0; i < image.size(); i+=4)
+			texture_buffer.push_back(vec3( float(image[i]), float(image[i+1]), float(image[i+2]) ) );
+		
+		texture_width = (int)width;
+		texture_height = (int)height;
+		printf("buffer size = %d\n", (int)image.size());
+		printf("width*height = %d\n", (int)width*(int)height);
+
+        std::ofstream ofs2("_tonemapped.ppm", std::ios::out | std::ios::binary); 
+        ofs2 << "P6\n" << width << " " << height << "\n255\n"; 
+        for (unsigned i = 0; i < width * height; ++i)
+        { 
+            ofs2 <<  (unsigned char)(texture_buffer[i].x()) << 
+                     (unsigned char)(texture_buffer[i].y()) << 
+                     (unsigned char)(texture_buffer[i].z()); 
+		}
+        ofs2.close();
+
+
+		// for(int i = 0; i < image.size(); ++i){
+		// 	printf("image[%d] = %f\n", i, (float)image[i]);
+		// }
+		// for(int i = 0; i < texture_buffer.size(); ++i){
+		// 	printf("color = (%f, %f, %f)\n", texture_buffer[i].x(), texture_buffer[i].y(), texture_buffer[i].z());
+		// }
+		
+		// std::vector<unsigned char> png;
+
+		// unsigned error = lodepng::encode(png, image, width, height);
+		// if(!error) lodepng::save_file(png, filename);
+
+		// //if there's an error, display it
+		// if(error) std::cout << "encoder error " << error << ": "<< lodepng_error_text(error) << std::endl;
+
+		// std::ofstream ofs2("_tonemapped.ppm", std::ios::out | std::ios::binary); 
+        // ofs2 << "P6\n" << width << " " << height << "\n255\n"; 
+        // // for (unsigned i = 0; i < width * height; i+=4)
+        // // { 
+        // //     ofs2 << (image[i]) << 
+        // //             (image[i+1]) << 
+        // //             (image[i+2]) ; 
+        // // }
+        // ofs2.close();
 	}
 	
 	~Obj(){}

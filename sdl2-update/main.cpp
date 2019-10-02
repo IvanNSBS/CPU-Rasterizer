@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 			SDL_SetRelativeMouseMode(SDL_FALSE);
             
 			std::vector<Obj> objects;
-            objects.push_back( Obj("./monkey_smooth.obj") );
+            objects.push_back( Obj("./elf.obj", "Elf_Albedo.png") );
 
 			ImGui::CreateContext();
 			ImGuiSDL::Initialize(renderer, WIDTH, HEIGHT);

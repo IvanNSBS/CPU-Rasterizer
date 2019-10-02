@@ -258,7 +258,8 @@ public:
         const vec2 &v2,
         const Vertex *vert,
         float *screen_z,
-        const vec3 &light_dir)
+        const vec3 &light_dir,
+        const Obj *obj = nullptr)
     {
         auto edge_function = [](const vec2 &p, const vec2 &v0, const vec2& v1, float &out) -> bool
         {
@@ -338,7 +339,13 @@ public:
                         float p = (fmod(st.x() * 10, 1.0) > 0.5) ^ (fmod(st.y() * 10, 1.0) < 0.5);
                         float val = std::max(0.0f, -dot(normal, light_dir));
 
-                        vec3 color = p*val*vec3(210,210,210) + vec3(40, 40, 40);
+                        // vec3 color = p*val*vec3(210,210,210) + vec3(40, 40, 40);
+                        int tx = std::floor( st.x()*(float)obj->texture_width);
+                        int ty = std::floor( st.y()*(float)obj->texture_height);
+                        int idx = (ty*obj->texture_width + tx);
+                        // printf("s = %f, t = %f\n", st.x(), st.y());
+                        // printf("idx = %d\n", idx);
+                        vec3 color = obj->texture_buffer[idx] * val + vec3(40,40,40);
                         color[0] = std::min(color[0], 255.f);
                         color[1] = std::min(color[1], 255.f);
                         color[2] = std::min(color[2], 255.f);
@@ -394,7 +401,7 @@ public:
                     float zs[3] = { z1, z2, z3 };
 
                     if( v1 && v2 && v3)
-                        fill_triangle(renderer, praster1, praster2, praster3, obj.mesh.tris[i].vertex, zs, light);
+                        fill_triangle(renderer, praster1, praster2, praster3, obj.mesh.tris[i].vertex, zs, light, &obj);
 
                     // if(v1 && v2){
                     //     bool clip = false;
