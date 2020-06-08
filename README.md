@@ -10,10 +10,10 @@
 - Control Look At by right-mouse clicking and moving mouse
 
 ## Example 1:
-![](./result1)
+![](./result1.png)
 
 ## Example 2:
-![](./result2)
+![](./result2.png)
 
 
 ## Problems:
